@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Face inside viewfinder brackets - distinct from ic_camera (camera body).
+     Used for the live "auto face validate" button on the attendance screen. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- Viewfinder corner brackets -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M3,3h6v2H5v4H3V3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M21,3v6h-2V5h-4V3H21z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M3,21v-6h2v4h4v2H3z" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M21,21h-6v-2h4v-4h2V21z" />
+
+    <!-- Eyes -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M9.5,10m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M14.5,10m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0" />
+
+    <!-- Smile -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1.6"
+        android:fillColor="#00000000"
+        android:strokeLineCap="round"
+        android:pathData="M9,13.5 Q12,16 15,13.5" />
+</vector>

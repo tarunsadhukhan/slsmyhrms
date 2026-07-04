@@ -1,0 +1,260 @@
+═══════════════════════════════════════════════════════════════
+  DATA FLOW DIAGRAM - HOURS FEATURE
+═══════════════════════════════════════════════════════════════
+
+BEFORE THE FIX (BROKEN):
+════════════════════════
+
+┌──────────────────┐
+│   DATABASE       │
+│  spell_mst       │
+│                  │
+│  A1: 5.0 hours  │
+│  A2: 3.0 hours  │
+│  C:  8.0 hours  │
+└────────┬─────────┘
+         │
+         ↓ SQL Query
+         │
+┌────────┴─────────────────────────────────────────┐
+│   BACKEND (app.py)                               │
+│   GET /shifts?branch_id=1                        │
+│                                                   │
+│   Returns JSON:                                  │
+│   {                                              │
+│     "status": "success",                         │
+│     "shifts": [                                  │
+│       {"id": 91, "name": "A1",                   │
+│        "working_hours": 5.0}                     │
+│     ]                                            │
+│   }                                              │
+└────────┬─────────────────────────────────────────┘
+         │
+         ↓ HTTP Response
+         │
+┌────────┴─────────────────────────────────────────┐
+│   FRONTEND (ShiftResponse.kt)                    │
+│                                                   │
+│   @SerializedName("data")  ❌ WRONG!            │
+│   val shifts: List<Shift>?                       │
+│                                                   │
+│   GSON looks for "data" key                      │
+│   JSON has "shifts" key                          │
+│   NO MATCH!                                      │
+│   Returns: shifts = null                         │
+└────────┬─────────────────────────────────────────┘
+         │
+         ↓ null data
+         │
+┌────────┴─────────────────────────────────────────┐
+│   FRONTEND (DrawingMeterEntryActivity.kt)        │
+│   Line 172:                                      │
+│                                                   │
+│   spellList.addAll(                              │
+│       response.body()?.shifts ?: emptyList()     │
+│   )                                              │
+│                                                   │
+│   Result: spellList = []  (EMPTY!)               │
+└────────┬─────────────────────────────────────────┘
+         │
+         ↓ Empty list
+         │
+┌────────┴─────────────────────────────────────────┐
+│   FRONTEND (Spell Change Listener)               │
+│   Line 112:                                      │
+│                                                   │
+│   val spell = spellList.getOrNull(position)      │
+│   Result: spell = null  (No data!)               │
+│                                                   │
+│   spell?.workingHours?.let { hours ->            │
+│       etHours.setText(hours.toInt().toString())  │
+│   }                                              │
+│                                                   │
+│   Result: Code never executes! ❌               │
+└────────┬─────────────────────────────────────────┘
+         │
+         ↓
+         │
+    ┌───┴────┐
+    │ HOURS  │
+    │ FIELD  │
+    │        │
+    │ EMPTY! │
+    │   ❌   │
+    └────────┘
+
+
+AFTER THE FIX (WORKING):
+════════════════════════
+
+┌──────────────────┐
+│   DATABASE       │
+│  spell_mst       │
+│                  │
+│  A1: 5.0 hours  │
+│  A2: 3.0 hours  │
+│  C:  8.0 hours  │
+└────────┬─────────┘
+         │
+         ↓ SQL Query
+         │
+┌────────┴─────────────────────────────────────────┐
+│   BACKEND (app.py)                               │
+│   GET /shifts?branch_id=1                        │
+│                                                   │
+│   Returns JSON:                                  │
+│   {                                              │
+│     "status": "success",                         │
+│     "shifts": [                                  │
+│       {"id": 91, "name": "A1",                   │
+│        "working_hours": 5.0},                    │
+│       {"id": 92, "name": "A2",                   │
+│        "working_hours": 3.0},                    │
+│       {"id": 94, "name": "C",                    │
+│        "working_hours": 8.0}                     │
+│     ]                                            │
+│   }                                              │
+└────────┬─────────────────────────────────────────┘
+         │
+         ↓ HTTP Response
+         │
+┌────────┴─────────────────────────────────────────┐
+│   FRONTEND (ShiftResponse.kt)                    │
+│                                                   │
+│   @SerializedName("shifts")  ✅ CORRECT!        │
+│   val shifts: List<Shift>?                       │
+│                                                   │
+│   GSON looks for "shifts" key                    │
+│   JSON has "shifts" key                          │
+│   MATCH! ✅                                      │
+│   Returns: shifts = List<Shift> with data       │
+└────────┬─────────────────────────────────────────┘
+         │
+         ↓ List<Shift> with data
+         │
+┌────────┴─────────────────────────────────────────┐
+│   FRONTEND (DrawingMeterEntryActivity.kt)        │
+│   Line 172:                                      │
+│                                                   │
+│   spellList.addAll(                              │
+│       response.body()?.shifts ?: emptyList()     │
+│   )                                              │
+│                                                   │
+│   Result: spellList = [                          │
+│     Shift(id=91, name="A1", workingHours=5.0),   │
+│     Shift(id=92, name="A2", workingHours=3.0),   │
+│     Shift(id=94, name="C", workingHours=8.0)     │
+│   ]  ✅ POPULATED!                               │
+└────────┬─────────────────────────────────────────┘
+         │
+         ↓ Populated list
+         │
+┌────────┴─────────────────────────────────────────┐
+│   FRONTEND (Spell Change Listener)               │
+│   Line 112:                                      │
+│                                                   │
+│   val spell = spellList.getOrNull(position)      │
+│   Result: spell = Shift(id=91, name="A1",        │
+│                   workingHours=5.0) ✅           │
+│                                                   │
+│   spell?.workingHours?.let { hours ->            │
+│       // hours = 5.0                             │
+│       etHours.setText(hours.toInt().toString())  │
+│       // Sets "5"                                │
+│   }                                              │
+│                                                   │
+│   Result: Code executes! ✅                      │
+└────────┬─────────────────────────────────────────┘
+         │
+         ↓
+         │
+    ┌───┴────┐
+    │ HOURS  │
+    │ FIELD  │
+    │        │
+    │   5    │  ← When A1 selected
+    │   3    │  ← When A2 selected
+    │   8    │  ← When C selected
+    │   ✅   │
+    └────────┘
+
+
+USER INTERACTION FLOW:
+══════════════════════
+
+User Opens Screen
+       ↓
+Load Spells API Call
+       ↓
+spellList Populated ✅
+       ↓
+First Spell Auto-Selected
+       ↓
+Hours Auto-Filled (e.g., "5")
+       ↓
+User Selects Different Spell (e.g., A2)
+       ↓
+Spell Change Listener Triggered
+       ↓
+clearForm() Called
+       ↓
+Get Spell from spellList[position]
+       ↓
+Extract workingHours (e.g., 3.0)
+       ↓
+Update Hours Field to "3" ✅
+       ↓
+User Sees Updated Hours!
+
+
+SAVE FLOW:
+══════════
+
+User Enters Data & Clicks Save
+       ↓
+Save Handler Triggered
+       ↓
+Read Current Hours Value (e.g., "8")
+       ↓
+POST Data to Backend
+       ↓
+Success Response Received
+       ↓
+Preserve Hours: currentHours = "8"
+       ↓
+clearForm() Called
+       ↓
+Restore Hours: etHours.setText("8")
+       ↓
+Hours Persist! ✅
+       ↓
+User Can Enter Next Machine
+       ↓
+Hours Still Shows "8" ✅
+
+
+KEY POINTS:
+═══════════
+
+1. ONE-LINE FIX:
+   @SerializedName("data") → @SerializedName("shifts")
+
+2. IMPACTS ALL API CALLS:
+   - Drawing Meter Entry ✅
+   - Attendance Dashboard ✅
+   - Attendance Report ✅
+   - Any screen using getShifts() ✅
+
+3. NO DATABASE CHANGES NEEDED:
+   - Backend already returns correct data
+   - Database already has working_hours column
+   - Only frontend parsing was broken
+
+4. ELEGANT SOLUTION:
+   - Minimal code change
+   - Maximum impact
+   - No breaking changes
+   - Backward compatible
+
+═══════════════════════════════════════════════════════════════
+

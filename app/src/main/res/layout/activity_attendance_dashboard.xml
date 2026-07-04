@@ -1,0 +1,689 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/toolbar_dark_blue">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/toolbar_dark_blue"
+        app:titleTextColor="@color/white">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+                <TextView
+                    android:id="@+id/tvWelcome"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Welcome to Attendance Dashboard"
+                    android:textColor="#BBDEFB"
+                    android:textSize="14sp" />
+
+                <TextView
+                    android:id="@+id/tvUserName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="User Name"
+                    android:textColor="@color/white"
+                    android:textSize="12sp"
+                    android:layout_marginTop="2dp" />
+
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnLogout"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Logout"
+                android:textSize="12sp"
+                android:paddingStart="12dp"
+                android:paddingEnd="12dp"
+                android:paddingTop="6dp"
+                android:paddingBottom="6dp"
+                android:backgroundTint="@color/white"
+                android:textColor="@color/toolbar_dark_blue" />
+
+        </LinearLayout>
+
+    </androidx.appcompat.widget.Toolbar>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@drawable/bg_card_top_rounded">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:paddingTop="16dp"
+            android:paddingBottom="24dp">
+
+            <!-- ── DASHBOARD CARDS ─────────────────────── -->
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Dashboard Overview"
+                android:textColor="@color/toolbar_dark_blue"
+                android:textSize="16sp"
+                android:textStyle="bold"
+                android:layout_marginBottom="10dp" />
+
+            <!-- Date + Spell selector row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <!-- Date picker left side -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Date"
+                        android:textColor="@color/toolbar_dark_blue"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+
+                    <EditText
+                        android:id="@+id/etDashboardDate"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:focusable="false"
+                        android:clickable="true"
+                        android:inputType="none"
+                        android:hint="Select date"
+                        android:textColor="@color/toolbar_dark_blue"
+                        android:textSize="13sp"
+                        android:padding="8dp"
+                        android:background="@drawable/bg_input_rounded" />
+                </LinearLayout>
+
+                <!-- Spell spinner right side -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="6dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Spell"
+                        android:textColor="@color/toolbar_dark_blue"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp" />
+
+                    <Spinner
+                        android:id="@+id/spDashboardSpell"
+                        android:layout_width="match_parent"
+                        android:layout_height="40dp"
+                        android:background="@drawable/bg_input_rounded"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Refresh button row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="end"
+                android:layout_marginBottom="10dp">
+
+                <Button
+                    android:id="@+id/btnRefreshDashboard"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Refresh"
+                    android:textSize="12sp"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:backgroundTint="@color/toolbar_dark_blue"
+                    android:textColor="@color/white" />
+            </LinearLayout>
+
+
+            <!-- Card 1: Today's Attendance (Pie Chart) — hidden by request -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="3dp"
+                android:visibility="gone"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Today's Attendance"
+                        android:textColor="@color/toolbar_dark_blue"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp" />
+
+                    <com.github.mikephil.charting.charts.PieChart
+                        android:id="@+id/chartAttendance"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Card 2: Wages -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="3dp"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Wages (Last 7 Days)"
+                        android:textColor="@color/toolbar_dark_blue"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp" />
+
+                    <com.github.mikephil.charting.charts.BarChart
+                        android:id="@+id/chartWages"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Card 3: Last 7 Days Present -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="3dp"
+                android:layout_marginBottom="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Last 7 Days Hands"
+                        android:textColor="@color/toolbar_dark_blue"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp" />
+
+                    <com.github.mikephil.charting.charts.LineChart
+                        android:id="@+id/chartLast7Days"
+                        android:layout_width="match_parent"
+                        android:layout_height="220dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Card 4: Absent Buckets -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="3dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Absent Employees by Duration"
+                        android:textColor="@color/toolbar_dark_blue"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp" />
+
+                    <com.github.mikephil.charting.charts.BarChart
+                        android:id="@+id/chartAbsentBuckets"
+                        android:layout_width="match_parent"
+                        android:layout_height="240dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- Card 5: Man vs Machine (last 7 days) -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="3dp"
+                android:layout_marginBottom="16dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="Actual Vs Target Hands (Last 7 Days)"
+                        android:textColor="@color/toolbar_dark_blue"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="6dp" />
+
+                    <com.github.mikephil.charting.charts.BarChart
+                        android:id="@+id/chartManMachine"
+                        android:layout_width="match_parent"
+                        android:layout_height="240dp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ── MENU BLOCK (hidden from Attendance Dashboard by request) ─── -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone">
+
+            <!-- ── ATTENDANCE SECTION ─────────────────────── -->
+            <LinearLayout
+                android:id="@+id/headerAttendance"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_menu_item"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_marginBottom="2dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Attendance"
+                    android:textColor="@color/toolbar_dark_blue"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/arrowAttendance"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_expand_more"
+                    app:tint="@color/toolbar_dark_blue" />
+            </LinearLayout>
+
+            <!-- Attendance Sub-menu -->
+            <LinearLayout
+                android:id="@+id/subMenuAttendance"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:id="@+id/menuAttendanceDashboard"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:text="📊  Attendance Dashboard"
+                    android:textColor="@color/label_text"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/menuAttendanceEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:text="✏️  Attendance Entry"
+                    android:textColor="@color/label_text"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+            </LinearLayout>
+
+            <!-- ── PRODUCTION SECTION ─────────────────────── -->
+            <LinearLayout
+                android:id="@+id/headerProduction"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_menu_item"
+                android:paddingStart="16dp"
+                android:paddingEnd="16dp"
+                android:layout_marginBottom="2dp"
+                android:clickable="true"
+                android:focusable="true">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="Production"
+                    android:textColor="@color/toolbar_dark_blue"
+                    android:textSize="15sp"
+                    android:textStyle="bold" />
+
+                <ImageView
+                    android:id="@+id/arrowProduction"
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:src="@drawable/ic_expand_more"
+                    app:tint="@color/toolbar_dark_blue" />
+            </LinearLayout>
+
+            <!-- Production Sub-menu -->
+            <LinearLayout
+                android:id="@+id/subMenuProduction"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:visibility="gone"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:id="@+id/menuProductionDashboard"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:text="📊  Production Dashboard"
+                    android:textColor="@color/label_text"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/headerSpreaderEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:paddingEnd="16dp"
+                    android:text="  Spreader Entry  ▾"
+                    android:textColor="@color/label_text"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <LinearLayout
+                    android:id="@+id/subMenuSpreaderEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginBottom="1dp">
+
+                    <TextView
+                        android:id="@+id/menuProductionEntry"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/bg_submenu_item"
+                        android:paddingStart="48dp"
+                        android:text="  Production Entry"
+                        android:textColor="@color/label_text"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="1dp"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/menuIssueEntry"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/bg_submenu_item"
+                        android:paddingStart="48dp"
+                        android:text="  Issue Entry"
+                        android:textColor="@color/label_text"
+                        android:textSize="14sp"
+                        android:layout_marginBottom="1dp"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/menuDrawingMeterEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:text="  Drawing Meter Entry"
+                    android:textColor="@color/label_text"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/menuSpinningDoffEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:text="  Spinning Doff Entry"
+                    android:textColor="@color/label_text"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/headerDoffEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:paddingEnd="16dp"
+                    android:text="  Doff Entry  ▾"
+                    android:textColor="@color/label_text"
+                    android:textStyle="bold"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <LinearLayout
+                    android:id="@+id/subMenuDoffEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone">
+
+                    <TextView
+                        android:id="@+id/menuSpellWiseFrameEntry"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/bg_submenu_item"
+                        android:paddingStart="48dp"
+                        android:text="  Spell wise Frame entry"
+                        android:textColor="@color/label_text"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="1dp"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/menuSpgDoffEntry"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/bg_submenu_item"
+                        android:paddingStart="48dp"
+                        android:text="  Spg Doff Entry"
+                        android:textColor="@color/label_text"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="1dp"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/menuSpgDoffEntry1"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/bg_submenu_item"
+                        android:paddingStart="48dp"
+                        android:text="  Spg Doff Entry (1)"
+                        android:textColor="@color/label_text"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="1dp"
+                        android:clickable="true"
+                        android:focusable="true" />
+
+                    <TextView
+                        android:id="@+id/menuSpgRunningHours"
+                        android:layout_width="match_parent"
+                        android:layout_height="44dp"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/bg_submenu_item"
+                        android:paddingStart="48dp"
+                        android:text="  Spg Running Hours"
+                        android:textColor="@color/label_text"
+                        android:textSize="13sp"
+                        android:layout_marginBottom="1dp"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/menuWindingEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:text="  Winding Entry"
+                    android:textColor="@color/label_text"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/menuWeavingEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:text="  Weaving Entry"
+                    android:textColor="@color/label_text"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <TextView
+                    android:id="@+id/headerFinishingEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="48dp"
+                    android:gravity="center_vertical"
+                    android:background="@drawable/bg_submenu_item"
+                    android:paddingStart="32dp"
+                    android:paddingEnd="16dp"
+                    android:text="  Finishing Entry  ▾"
+                    android:textColor="@color/label_text"
+                    android:textSize="14sp"
+                    android:layout_marginBottom="1dp"
+                    android:clickable="true"
+                    android:focusable="true" />
+
+                <LinearLayout
+                    android:id="@+id/subMenuFinishingEntry"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:visibility="gone"
+                    android:layout_marginBottom="1dp">
+
+                    <TextView
+                        android:id="@+id/menuOtherEntries"
+                        android:layout_width="match_parent"
+                        android:layout_height="48dp"
+                        android:gravity="center_vertical"
+                        android:background="@drawable/bg_submenu_item"
+                        android:paddingStart="48dp"
+                        android:text="  Other Entries"
+                        android:textColor="@color/label_text"
+                        android:textSize="14sp"
+                        android:clickable="true"
+                        android:focusable="true" />
+                </LinearLayout>
+            </LinearLayout>
+
+            </LinearLayout>
+            <!-- ── /MENU BLOCK ───────────────────────────────────────────── -->
+
+        </LinearLayout>
+    </ScrollView>
+
+</LinearLayout>

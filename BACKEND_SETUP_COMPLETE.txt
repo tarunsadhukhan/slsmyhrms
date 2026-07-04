@@ -1,0 +1,141 @@
+╔══════════════════════════════════════════════════════════════════╗
+║     ✅ BACKEND FILES CREATED SUCCESSFULLY!                       ║
+╚══════════════════════════════════════════════════════════════════╝
+
+📁 CREATED FILES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✅ e:\sjm\attendancesystem\src\drawing\__init__.py
+  ✅ e:\sjm\attendancesystem\src\drawing\routes.py
+  ✅ e:\sjm\attendancesystem\src\database.py
+  ✅ e:\sjm\attendancesystem\src\__init__.py
+
+📋 NEXT STEPS (Copy & Paste)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Register Blueprint in app.py
+────────────────────────────────────────────────────────────────────
+
+Open: e:\sjm\attendancesystem\app.py
+
+Add these 2 lines near the top (after other imports):
+
+    from src.drawing import drawing_bp
+
+Then add this line after app = Flask(__name__):
+
+    app.register_blueprint(drawing_bp)
+
+FULL EXAMPLE:
+──────────────��─────────────────────────────────────────────────────
+from flask import Flask, request, jsonify
+from src.drawing import drawing_bp        # ← ADD THIS
+
+app = Flask(__name__)
+app.register_blueprint(drawing_bp)        # ← ADD THIS
+
+# ... rest of your app code ...
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5051, debug=True)
+
+
+STEP 2: Create Database Tables
+────────────────────────────────────────────────────────────────────
+
+Run this file in MySQL:
+    E:\sjm\MyHrms\database_setup_drawing.sql
+
+OR run these commands:
+
+mysql -h 13.126.47.172 -u myroot -p sjm < E:\sjm\MyHrms\database_setup_drawing.sql
+
+OR manually in MySQL Workbench:
+────────────────────────────────────────────────────────────────────
+USE sjm;
+
+CREATE TABLE IF NOT EXISTS tbl_drawing_mst (
+    mc_id INT PRIMARY KEY AUTO_INCREMENT,
+    mc_short_name VARCHAR(50) NOT NULL,
+    shed_type VARCHAR(50) NOT NULL,
+    cont_meter DECIMAL(10,2) DEFAULT 0,
+    branch_id INT,
+    active TINYINT DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    INDEX idx_shed_type (shed_type)
+);
+
+CREATE TABLE IF NOT EXISTS tbl_daily_drawing (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    date DATE NOT NULL,
+    spell_id INT NOT NULL,
+    shed_type VARCHAR(50),
+    mc_id INT NOT NULL,
+    opening_meter DECIMAL(10,2) DEFAULT 0,
+    closing_meter DECIMAL(10,2) DEFAULT 0,
+    unit DECIMAL(10,2) DEFAULT 0,
+    hours DECIMAL(5,2) DEFAULT 0,
+    eff DECIMAL(5,2) DEFAULT 0,
+    branch_id INT,
+    user_id INT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_entry (date, spell_id, mc_id),
+    FOREIGN KEY (mc_id) REFERENCES tbl_drawing_mst(mc_id)
+);
+
+-- Sample data
+INSERT INTO tbl_drawing_mst (mc_short_name, shed_type, cont_meter, branch_id) VALUES
+('D1', 'Shed A', 1000.00, 29),
+('D2', 'Shed A', 1200.00, 29),
+('D3', 'Shed B', 1500.00, 29);
+
+
+STEP 3: Start Backend Server
+────────────────────────────────────────────────────────────────────
+
+cd e:\sjm\attendancesystem
+python app.py
+
+
+STEP 4: Test API Endpoints
+────────────────────────────────────────────────────────────────────
+
+curl http://localhost:5051/drawing/sheds?branch_id=29
+
+Expected response:
+{
+  "status": "success",
+  "sheds": ["Shed A", "Shed B"]
+}
+
+
+STEP 5: Build & Test Android App
+────────────────────────────────────────────────────────────────────
+
+cd E:\sjm\MyHrms
+.\gradlew assembleDebug
+
+Then install APK and navigate to:
+Production Dashboard → Drawing Meter Entry
+
+╔══════════════════════════════════════════════════════════════════╗
+║  🎯 READY TO GO!                                                 ║
+║                                                                  ║
+║  Backend files are created.                                      ║
+║  Just register the blueprint in app.py and create DB tables!     ║
+╚════════════════════════════════���═════════════════════════════════╝
+
+✅ CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━���━━━━━━━━━━━━━━━━
+□ Add blueprint import to app.py
+□ Add app.register_blueprint(drawing_bp) to app.py
+□ Create database tables (run database_setup_drawing.sql)
+□ Start backend server
+□ Test /drawing/sheds endpoint
+□ Build Android app
+□ Test on device
+
+📖 Documentation:
+   - BACKEND_INTEGRATION_REFERENCE.md (Full guide)
+   - README_DRAWING_METER_ENTRY.md (Quick start)
+

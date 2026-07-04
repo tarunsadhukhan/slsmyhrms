@@ -1,0 +1,5 @@
+4: class MarkAttendanceSchema(Schema):
+11: class ManualAttendanceSchema(Schema):
+18: class CheckFaceSchema(Schema):
+22: class AttendanceReportSchema(Schema):
+24: required = ['from_date', 'to_date']

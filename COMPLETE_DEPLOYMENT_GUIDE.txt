@@ -1,0 +1,259 @@
+=================================================================
+ COMPLETE SOLUTION: HOURS FIELD WITH working_hours API
+=================================================================
+
+Date: May 6, 2026
+Status: ✅ ALL CODE READY - DEPLOYMENT REQUIRED
+
+=================================================================
+ ISSUE CLARIFICATION
+=================================================================
+
+Backend Location: e:\sjm\attendancesystem (NOT e:\sjm\myhrms)
+
+Workflow:
+1. Code development → E:\sjm\MyHrms\
+2. Code deployment → e:\sjm\attendancesystem\
+3. Server runs at → e:\sjm\attendancesystem\
+
+=================================================================
+ WORKING_HOURS API STATUS
+=================================================================
+
+API: GET /shifts?branch_id=<id>
+
+Location in Code: E:\sjm\MyHrms\app.py (Line 354-386)
+Location in Code should be : E:\sjm\AttendanceSystem\app.py (Line 354-386)
+
+Status: ✅ READY
+Returns: working_hours for each spell with 'shifts' key
+
+Example Response:
+{
+  "status": "success",
+  "shifts": [
+    {"id": 91, "name": "A1", "working_hours": 5.0},
+    {"id": 92, "name": "A2", "working_hours": 3.0},
+    {"id": 95, "name": "C", "working_hours": 8.0}
+  ],
+  "total": 3
+}
+
+Features:
+✅ COALESCE(working_hours, 8.0) - defaults to 8.0 if NULL
+✅ Optional branch_id filtering
+✅ Response key: 'shifts' (FIXED from 'data')
+✅ Ordered by spell_name
+
+=================================================================
+ DEPLOYMENT STEPS (IN ORDER)
+=================================================================
+
+STEP 1: Deploy Backend
+-----------------------
+Run: deploy_backend.bat
+
+Or manually:
+copy /Y "E:\sjm\MyHrms\app.py" "e:\sjm\attendancesystem\app.py"
+
+What it does:
+- Copies updated app.py with working_hours API
+- Overwrites old version in attendancesystem
+
+STEP 2: Restart Flask Server
+-----------------------------
+Run: restart_backend_server.bat
+
+Or manually:
+cd e:\sjm\attendancesystem
+python app.py
+
+Wait for: "Server ready at http://0.0.0.0:5051"
+
+STEP 3: Test API
+----------------
+Browser: http://localhost:5051/shifts
+
+Expected:
+- Status 200 OK
+- JSON with "shifts" array
+- Each spell has "working_hours" field
+
+STEP 4: Build Android APK
+--------------------------
+Run: BUILD.bat
+
+Or manually:
+cd E:\sjm\MyHrms
+gradlew.bat assembleDebug
+
+APK Location:
+E:\sjm\MyHrms\app\build\outputs\apk\debug\app-debug.apk
+
+STEP 5: Install & Test App
+---------------------------
+1. Install APK on Android device
+2. Open Drawing Meter Entry
+3. Verify hours auto-fill from spell
+4. Verify hours persist after save
+5. Verify hours update when spell changes
+
+=================================================================
+ QUICK START (3 COMMANDS)
+=================================================================
+
+1. deploy_backend.bat        (Deploy API to attendancesystem)
+2. restart_backend_server.bat (Restart Flask server)
+3. BUILD.bat                  (Build Android APK)
+
+Then install APK and test!
+
+=================================================================
+ FILE LOCATIONS
+=================================================================
+
+BACKEND (Development):
+E:\sjm\MyHrms\app.py
+  ├─ Line 354-386: GET /shifts endpoint
+  └─ Line 383: Returns 'shifts' key ✅
+
+BACKEND (Production):
+e:\sjm\attendancesystem\app.py
+  └─ Deploy here using deploy_backend.bat
+
+FRONTEND:
+E:\sjm\MyHrms\app\src\main\java\com\example\myhrms\
+  ├─ DrawingMeterEntryActivity.kt (Line 167-189)
+  │  └─ Calls getShifts() API
+  │  └─ Auto-fills hours from working_hours
+  │  └─ Preserves hours after save
+  └─ api\
+     ├─ ApiService.kt (Defines getShifts method)
+     └─ ShiftResponse.kt (Expects 'shifts' key)
+
+DEPLOYMENT SCRIPTS:
+E:\sjm\MyHrms\
+  ├─ deploy_backend.bat (Copy to attendancesystem)
+  ├─ restart_backend_server.bat (Restart Flask)
+  └─ BUILD.bat (Build APK)
+
+DOCUMENTATION:
+E:\sjm\MyHrms\
+  ├─ BACKEND_DEPLOYMENT_GUIDE.txt (This file)
+  ├─ WORKING_HOURS_API_REFERENCE.txt (API details)
+  ├─ DRAWING_SPELLS_API.md (Full API doc)
+  ├─ HOURS_FIELD_COMPLETE_FIX.md (Technical details)
+  └─ BUILD_INSTRUCTIONS.md (Build help)
+
+=================================================================
+ CHANGES SUMMARY
+=================================================================
+
+BACKEND (app.py Line 383):
+BEFORE: return jsonify({'status': 'success', 'data': data})
+AFTER:  return jsonify({'status': 'success', 'shifts': data})
+
+FRONTEND (DrawingMeterEntryActivity.kt):
+
+1. Line 108-117: Spell change listener
+   - Calls clearForm() FIRST
+   - THEN sets hours from spell.workingHours
+
+2. Line 178-183: Initial load
+   - Auto-fills hours from first spell
+
+3. Line 384-389: After save
+   - Preserves currentHours before clearForm()
+   - Restores hours after clearForm()
+
+=================================================================
+ TESTING CHECKLIST
+=================================================================
+
+Backend API Test:
+□ http://localhost:5051/shifts returns JSON
+□ Response has "shifts" key (not "data")
+□ Each spell has "working_hours" field
+□ working_hours is never NULL
+
+Frontend App Test:
+□ Spells load in dropdown
+□ Hours auto-fill on spell selection
+□ Hours update when changing spell
+□ Hours persist after saving entry
+□ Can enter multiple machines without re-entering hours
+
+=================================================================
+ TROUBLESHOOTING
+=================================================================
+
+Problem: API returns "data" instead of "shifts"
+Solution:
+1. Run deploy_backend.bat
+2. Restart Flask server
+3. Test API again
+
+Problem: working_hours is null or missing
+Solution:
+1. Check database: SELECT * FROM spell_mst;
+2. Update if needed: UPDATE spell_mst SET working_hours = 8.0;
+3. Restart server
+
+Problem: Hours don't auto-fill in app
+Solution:
+1. Check backend deployed: e:\sjm\attendancesystem\app.py
+2. Check server restarted
+3. Test API in browser
+4. Rebuild APK if backend OK
+5. Reinstall APK
+
+Problem: Server won't start
+Solution:
+1. Check port 5051 not in use
+2. Check MySQL running
+3. Check Python version (3.7+)
+4. Check database credentials
+
+=================================================================
+ WORKFLOW SUMMARY
+=================================================================
+
+Development Cycle:
+1. Edit code → E:\sjm\MyHrms\
+2. Deploy → deploy_backend.bat
+3. Restart → restart_backend_server.bat
+4. Test API → http://localhost:5051/shifts
+5. Build APK → BUILD.bat
+6. Install → Transfer APK to device
+7. Test → Drawing Meter Entry
+
+ALWAYS deploy backend to attendancesystem before testing!
+
+=================================================================
+ SUCCESS CRITERIA
+=================================================================
+
+✅ deploy_backend.bat runs successfully
+✅ Flask server starts at port 5051
+✅ API test returns correct JSON format
+✅ APK builds without errors
+✅ App installs on device
+✅ Hours auto-fill from spell
+✅ Hours persist after save
+✅ Hours update on spell change
+
+=================================================================
+ NEXT ACTIONS
+=================================================================
+
+1. Run: deploy_backend.bat
+2. Run: restart_backend_server.bat
+3. Test: http://localhost:5051/shifts
+4. Run: BUILD.bat
+5. Install APK
+6. Test Drawing Meter Entry
+
+All code is ready! Just deploy and test!
+
+=================================================================
+

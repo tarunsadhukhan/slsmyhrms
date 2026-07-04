@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="#FFFFFF"
+    android:paddingStart="8dp"
+    android:paddingEnd="4dp"
+    android:paddingTop="6dp"
+    android:paddingBottom="6dp"
+    android:layout_marginBottom="2dp">
+
+    <TextView android:id="@+id/tvSpell"     android:layout_width="80dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:textStyle="bold" android:gravity="center"/>
+    <TextView android:id="@+id/tvLooms"     android:layout_width="60dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:gravity="center"/>
+    <TextView android:id="@+id/tvCuts"      android:layout_width="60dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:gravity="center"/>
+    <TextView android:id="@+id/tvHemming"   android:layout_width="60dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:gravity="center"/>
+    <TextView android:id="@+id/tvHeracle"   android:layout_width="60dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:gravity="center"/>
+    <TextView android:id="@+id/tvCutting"   android:layout_width="60dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:gravity="center"/>
+    <TextView android:id="@+id/tvBranding"  android:layout_width="60dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:gravity="center"/>
+    <TextView android:id="@+id/tvHandSewer" android:layout_width="60dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:gravity="center"/>
+    <TextView android:id="@+id/tvBales"     android:layout_width="60dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:textStyle="bold" android:gravity="center"/>
+    <TextView android:id="@+id/tvIssueBales" android:layout_width="60dp" android:layout_height="wrap_content"
+        android:textColor="#1E1E1E" android:textSize="13sp" android:textStyle="bold" android:gravity="center"/>
+
+    <ImageView android:id="@+id/ivEdit"
+        android:layout_width="32dp" android:layout_height="32dp"
+        android:src="@drawable/ic_edit" android:padding="6dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Edit" app:tint="#1565C0"/>
+    <ImageView android:id="@+id/ivDelete"
+        android:layout_width="32dp" android:layout_height="32dp"
+        android:src="@drawable/ic_delete" android:padding="6dp"
+        android:background="?android:attr/selectableItemBackgroundBorderless"
+        android:contentDescription="Delete" app:tint="#C62828"/>
+</LinearLayout>

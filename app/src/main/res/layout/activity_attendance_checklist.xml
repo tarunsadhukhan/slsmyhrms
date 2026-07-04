@@ -1,0 +1,302 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/toolbar_dark_blue">
+
+    <!-- Toolbar -->
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/toolbar_dark_blue"
+        app:navigationIcon="@drawable/ic_arrow_back"
+        app:titleTextColor="@color/white">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Attendance Checklist"
+            android:textColor="@color/white"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- Filter Card -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <!-- Row 1: From Date + To Date -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginEnd="6dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="From Date" android:textColor="#BBDEFB" android:textSize="11sp"
+                    android:layout_marginBottom="2dp" />
+                <LinearLayout
+                    android:id="@+id/btnFromDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_date_picker_btn"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp" android:paddingEnd="10dp"
+                    android:clickable="true" android:focusable="true">
+                    <ImageView android:layout_width="14dp" android:layout_height="14dp"
+                        android:src="@drawable/ic_calendar" app:tint="@color/white"
+                        android:contentDescription="From Date" />
+                    <TextView android:id="@+id/tvFromDate" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:layout_marginStart="6dp"
+                        android:text="" android:textColor="@color/white"
+                        android:textSize="12sp" android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:layout_marginStart="6dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="To Date" android:textColor="#BBDEFB" android:textSize="11sp"
+                    android:layout_marginBottom="2dp" />
+                <LinearLayout
+                    android:id="@+id/btnToDate"
+                    android:layout_width="match_parent"
+                    android:layout_height="40dp"
+                    android:background="@drawable/bg_date_picker_btn"
+                    android:gravity="center_vertical"
+                    android:orientation="horizontal"
+                    android:paddingStart="10dp" android:paddingEnd="10dp"
+                    android:clickable="true" android:focusable="true">
+                    <ImageView android:layout_width="14dp" android:layout_height="14dp"
+                        android:src="@drawable/ic_calendar" app:tint="@color/white"
+                        android:contentDescription="To Date" />
+                    <TextView android:id="@+id/tvToDate" android:layout_width="wrap_content"
+                        android:layout_height="wrap_content" android:layout_marginStart="6dp"
+                        android:text="" android:textColor="@color/white"
+                        android:textSize="12sp" android:textStyle="bold" />
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Row 2: Spell + Department -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:layout_marginBottom="8dp">
+
+            <LinearLayout
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical"
+                android:layout_marginEnd="6dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Spell" android:textColor="#BBDEFB" android:textSize="11sp"
+                    android:layout_marginBottom="2dp" />
+                <Spinner android:id="@+id/spSpell"
+                    android:layout_width="match_parent" android:layout_height="40dp"
+                    android:background="@drawable/bg_input_rounded"
+                    android:paddingStart="8dp" android:paddingEnd="8dp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical"
+                android:layout_marginStart="6dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Department" android:textColor="#BBDEFB" android:textSize="11sp"
+                    android:layout_marginBottom="2dp" />
+                <Spinner android:id="@+id/spDepartment"
+                    android:layout_width="match_parent" android:layout_height="40dp"
+                    android:background="@drawable/bg_input_rounded"
+                    android:paddingStart="8dp" android:paddingEnd="8dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Row 3: Designation + Search -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1" android:orientation="vertical"
+                android:layout_marginEnd="6dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Designation" android:textColor="#BBDEFB" android:textSize="11sp"
+                    android:layout_marginBottom="2dp" />
+                <Spinner android:id="@+id/spDesignation"
+                    android:layout_width="match_parent" android:layout_height="40dp"
+                    android:background="@drawable/bg_input_rounded"
+                    android:paddingStart="8dp" android:paddingEnd="8dp" />
+            </LinearLayout>
+
+            <Button
+                android:id="@+id/btnSearch"
+                android:layout_width="0dp"
+                android:layout_height="40dp"
+                android:layout_weight="1"
+                android:layout_marginStart="6dp"
+                android:layout_marginTop="14dp"
+                android:text="SEARCH"
+                android:textSize="13sp"
+                android:backgroundTint="#1976D2"
+                android:textColor="@color/white" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- Results area -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:background="@drawable/bg_card_top_rounded">
+
+        <!-- Progress -->
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone"
+            android:layout_marginTop="20dp" />
+
+        <!-- Summary row -->
+        <LinearLayout
+            android:id="@+id/layoutSummary"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:paddingStart="12dp" android:paddingEnd="12dp"
+            android:paddingTop="10dp" android:paddingBottom="6dp"
+            android:visibility="gone">
+
+            <TextView android:id="@+id/tvTotalRecords"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="Records: 0"
+                android:textColor="@color/label_text" android:textSize="12sp" />
+
+            <TextView android:id="@+id/tvDateRange"
+                android:layout_width="0dp" android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:text=""
+                android:textColor="@color/hint_text" android:textSize="11sp"
+                android:gravity="end" />
+        </LinearLayout>
+
+        <!-- TABLE: header + rows scroll together horizontally -->
+        <HorizontalScrollView
+            android:id="@+id/hsvTable"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:scrollbars="horizontal"
+            android:fillViewport="false"
+            android:visibility="gone">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:orientation="vertical">
+
+                <!-- Header -->
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="44dp"
+                    android:orientation="horizontal"
+                    android:background="#1565C0">
+
+                    <TextView android:layout_width="80dp" android:layout_height="match_parent"
+                        android:gravity="center" android:text="Date"
+                        android:textColor="@color/white" android:textSize="11sp" android:textStyle="bold"
+                        android:background="@drawable/table_header_cell" />
+
+                    <TextView android:layout_width="64dp" android:layout_height="match_parent"
+                        android:gravity="center" android:text="Spell"
+                        android:textColor="@color/white" android:textSize="11sp" android:textStyle="bold"
+                        android:background="@drawable/table_header_cell" />
+
+                    <TextView android:layout_width="64dp" android:layout_height="match_parent"
+                        android:gravity="center" android:text="EB No"
+                        android:textColor="@color/white" android:textSize="11sp" android:textStyle="bold"
+                        android:background="@drawable/table_header_cell" />
+
+                    <TextView android:layout_width="140dp" android:layout_height="match_parent"
+                        android:gravity="center" android:text="Emp Name"
+                        android:textColor="@color/white" android:textSize="11sp" android:textStyle="bold"
+                        android:background="@drawable/table_header_cell" />
+
+                    <TextView android:layout_width="110dp" android:layout_height="match_parent"
+                        android:gravity="center" android:text="Department"
+                        android:textColor="@color/white" android:textSize="11sp" android:textStyle="bold"
+                        android:background="@drawable/table_header_cell" />
+
+                    <TextView android:layout_width="110dp" android:layout_height="match_parent"
+                        android:gravity="center" android:text="Designation"
+                        android:textColor="@color/white" android:textSize="11sp" android:textStyle="bold"
+                        android:background="@drawable/table_header_cell" />
+
+                    <TextView android:layout_width="70dp" android:layout_height="match_parent"
+                        android:gravity="center" android:text="Source"
+                        android:textColor="@color/white" android:textSize="11sp" android:textStyle="bold"
+                        android:background="@drawable/table_header_cell" />
+
+                    <TextView android:layout_width="50dp" android:layout_height="match_parent"
+                        android:gravity="center" android:text="Type"
+                        android:textColor="@color/white" android:textSize="11sp" android:textStyle="bold"
+                        android:background="@drawable/table_header_cell" />
+
+                    <TextView android:layout_width="64dp" android:layout_height="match_parent"
+                        android:gravity="center" android:text="Wk Hrs"
+                        android:textColor="@color/white" android:textSize="11sp" android:textStyle="bold"
+                        android:background="@drawable/table_header_cell" />
+                </LinearLayout>
+
+                <!-- Data rows -->
+                <androidx.recyclerview.widget.RecyclerView
+                    android:id="@+id/rvChecklist"
+                    android:layout_width="wrap_content"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:nestedScrollingEnabled="true"
+                    android:overScrollMode="never" />
+            </LinearLayout>
+        </HorizontalScrollView>
+
+        <!-- Empty state -->
+        <LinearLayout
+            android:id="@+id/layoutEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:orientation="vertical"
+            android:visibility="gone">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                android:text="No data found" android:textColor="@color/hint_text"
+                android:textSize="16sp" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</LinearLayout>

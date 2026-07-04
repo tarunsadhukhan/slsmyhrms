@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="24dp">
+
+    <EditText
+        android:id="@+id/etShiftName"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/bg_input_rounded"
+        android:hint="Shift name (e.g. Morning)"
+        android:textColorHint="@color/hint_text"
+        android:textColor="@color/black"
+        android:inputType="text"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textSize="15sp" />
+
+    <EditText
+        android:id="@+id/etStartTime"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_input_rounded"
+        android:hint="Start time (e.g. 08:00)"
+        android:textColorHint="@color/hint_text"
+        android:textColor="@color/black"
+        android:inputType="time"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textSize="15sp"
+        android:focusable="false"
+        android:clickable="true" />
+
+    <EditText
+        android:id="@+id/etEndTime"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_input_rounded"
+        android:hint="End time (e.g. 16:00)"
+        android:textColorHint="@color/hint_text"
+        android:textColor="@color/black"
+        android:inputType="time"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:textSize="15sp"
+        android:focusable="false"
+        android:clickable="true" />
+
+</LinearLayout>
+

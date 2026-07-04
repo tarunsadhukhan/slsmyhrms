@@ -1,0 +1,399 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F2F2F2">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#1E1E1E"
+        app:titleTextColor="@color/white">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="New Doff Entry"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </androidx.appcompat.widget.Toolbar>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <!-- ═══ ENTRY CARD ═══ -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:id="@+id/tvEntryTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="New Doff Entry"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#1E1E1E"
+                        android:layout_marginBottom="10dp" />
+
+                    <!-- Row 1: Date | Spell -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="2"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Date" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <LinearLayout
+                                android:id="@+id/btnEntryDate"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingStart="10dp"
+                                android:paddingEnd="6dp">
+                                <TextView
+                                    android:id="@+id/tvEntryDate"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:textColor="#000000"
+                                    android:textSize="13sp" />
+                                <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                                    android:src="@drawable/ic_calendar" app:tint="#1565C0" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Spell" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <Spinner
+                                android:id="@+id/spEntrySpell"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="8dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Row 2: Machine No | Trolly No -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="2"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Machine No" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etMcNo"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="number"
+                                android:textColor="#000000"
+                                android:textSize="13sp"
+                                android:hint="MC No" />
+                            <TextView
+                                android:id="@+id/tvMcInfo"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="#2E7D32"
+                                android:textSize="11sp"
+                                android:layout_marginTop="2dp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Trolly No" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etTrollyNo"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="number"
+                                android:textColor="#000000"
+                                android:textSize="13sp"
+                                android:hint="Trolly No" />
+                            <TextView
+                                android:id="@+id/tvTrollyInfo"
+                                android:layout_width="match_parent"
+                                android:layout_height="wrap_content"
+                                android:textColor="#2E7D32"
+                                android:textSize="11sp"
+                                android:layout_marginTop="2dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Row 3: Gross | Tare | Net -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="3"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="4dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Gross Wt" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etGross"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="numberDecimal"
+                                android:textColor="#000000"
+                                android:textSize="13sp"
+                                android:hint="0.000" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginHorizontal="4dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Tare Wt" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etTare"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="numberDecimal"
+                                android:textColor="#000000"
+                                android:textSize="13sp"
+                                android:hint="0.000" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="4dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Net Wt" android:textColor="#1565C0" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etNet"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="numberDecimal"
+                                android:textColor="#1565C0"
+                                android:textSize="13sp"
+                                android:hint="0.000"
+                                android:focusable="false" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Row 4: Total Doff Wt | No of Doff -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="2"
+                        android:layout_marginBottom="12dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Total Doff Wt + Net" android:textColor="#1565C0" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etTotalDoffWt"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="numberDecimal"
+                                android:textColor="#1565C0"
+                                android:textSize="13sp"
+                                android:hint="0.000"
+                                android:focusable="false" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="No of Doff" android:textColor="#1565C0" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etNoOfDoff"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="number"
+                                android:textColor="#1565C0"
+                                android:textSize="13sp"
+                                android:hint="0"
+                                android:focusable="false" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Row 5: Save | Clear -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="3">
+
+                        <Button
+                            android:id="@+id/btnSave"
+                            android:layout_width="0dp"
+                            android:layout_weight="2"
+                            android:layout_height="46dp"
+                            android:text="SAVE"
+                            android:textColor="#FFFFFF"
+                            android:backgroundTint="#1565C0"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="6dp" />
+
+                        <Button
+                            android:id="@+id/btnClear"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="46dp"
+                            android:text="CLEAR"
+                            android:textColor="#FFFFFF"
+                            android:backgroundTint="#757575"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ═══ SUMMARY HEADER ═══ -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#1565C0">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="10dp"
+                    android:weightSum="3">
+
+                    <TextView android:layout_width="0dp" android:layout_weight="1.2"
+                        android:layout_height="wrap_content"
+                        android:text="MC No" android:textColor="#FFFFFF"
+                        android:textStyle="bold" android:textSize="13sp"/>
+                    <TextView android:layout_width="0dp" android:layout_weight="0.8"
+                        android:layout_height="wrap_content"
+                        android:text="No of Doff" android:textColor="#FFFFFF"
+                        android:textStyle="bold" android:textSize="13sp"
+                        android:gravity="center"/>
+                    <TextView android:layout_width="0dp" android:layout_weight="1"
+                        android:layout_height="wrap_content"
+                        android:text="Total Wt" android:textColor="#FFFFFF"
+                        android:textStyle="bold" android:textSize="13sp"
+                        android:gravity="end"/>
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No records found"
+                android:gravity="center"
+                android:textColor="#888888"
+                android:textSize="13sp"
+                android:padding="16dp"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvDoffSummary"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>
+

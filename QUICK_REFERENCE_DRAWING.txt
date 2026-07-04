@@ -1,0 +1,132 @@
+╔══════════════════════════════════════════════════════════════════╗
+║          DRAWING METER ENTRY - QUICK REFERENCE CARD              ║
+╚══════════════════════════════════════════════════════════════════╝
+
+📁 CRITICAL PATHS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Backend:     e:\sjm\attendancesystem
+  Database:    sjm @ 13.126.47.172
+  Reference:   E:\sjm\MyHrms\src\drawing\
+  Android:     E:\sjm\MyHrms\app\
+
+📋 3-STEP SETUP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. .\copy_drawing_to_backend.ps1
+  2. Run: database_setup_drawing.sql in MySQL
+  3. Add to e:\sjm\attendancesystem\app.py:
+
+     from src.drawing import drawing_bp
+     app.register_blueprint(drawing_bp)
+
+📖 DOCUMENTATION (Read in Order)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. README_DRAWING_METER_ENTRY.md        ← START HERE
+  2. BACKEND_INTEGRATION_REFERENCE.md     ← FULL GUIDE
+  3. database_setup_drawing.sql           ← SQL SETUP
+  4. copy_drawing_to_backend.ps1          ← AUTO COPY
+
+🗄️ DATABASE TABLES
+━━━━━━━━━━━━━━━━━━���━���━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  tbl_drawing_mst        Master (machines)
+  tbl_daily_drawing      Transactions (meter readings)
+
+🔌 API ENDPOINTS (5 Total)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  GET  /drawing/sheds           Get unique shed types
+  GET  /drawing/machines         Get machines by shed
+  GET  /drawing/opening-meter    Get previous closing meter
+  POST /drawing/entry            Save meter entry
+  GET  /drawing/summary          Get summary list
+
+🧮 CALCULATION FORMULA
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Unit = Closing - Opening
+  Eff% = ((Unit / Hours * 8) / Const * 100) rounded to 2 decimals
+
+  Default Const = 100.0
+
+✅ VERIFICATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Backend:  curl http://localhost:5051/drawing/sheds?branch_id=29
+  Android:  Build & Install APK → Production → Drawing Meter Entry
+
+📱 ANDROID FILES (Already Complete)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ✓ DrawingMeterEntryActivity.kt
+  ✓ DrawingResponse.kt
+  ✓ DrawingSummaryAdapter.kt
+  ✓ activity_drawing_meter_entry.xml
+  ✓ item_drawing_summary.xml
+  ✓ ApiRoutes.kt (updated)
+  ✓ ApiService.kt (updated)
+  ✓ AndroidManifest.xml (registered)
+
+🐍 BACKEND FILES (To Be Setup)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Location: e:\sjm\attendancesystem\src\drawing\
+
+  Files to copy:
+    ✓ __init__.py         (Blueprint init)
+    ✓ routes.py           (5 API endpoints)
+
+  Create:
+    ○ database.py         (get_db() function)
+    ○ Register in app.py  (blueprint)
+
+⚡ QUICK COMMANDS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Copy Backend:
+    cd E:\sjm\MyHrms
+    .\copy_drawing_to_backend.ps1
+
+  Setup DB:
+    mysql -h 13.126.47.172 -u myroot -p sjm < database_setup_drawing.sql
+
+  Start Backend:
+    cd e:\sjm\attendancesystem
+    python app.py
+
+  Build Android:
+    cd E:\sjm\MyHrms
+    .\gradlew assembleDebug
+
+🎯 USER WORKFLOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Open app → Production Dashboard → Drawing Meter Entry
+  2. Select: Date, Spell, Shed
+  3. Tap machine button
+  4. Opening meter auto-loads
+  5. Enter: Closing meter, Hours
+  6. Unit & Eff auto-calculate
+  7. Tap Save
+  8. View in Summary list
+
+🆘 TROUBLESHOOTING
+━━━━━━━━━━━━━━━━��━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Issue: "Module not found"
+  → Check __init__.py files exist in src/ and src/drawing/
+
+  Issue: "Table doesn't exist"
+  → Run database_setup_drawing.sql
+
+  Issue: "Cannot import get_db"
+  → Create src/database.py with DB config
+
+  Issue: "App can't connect"
+  → Check backend running on port 5051
+  → Verify firewall allows connection
+
+✅ STATUS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Android:       ✅ COMPLETE
+  Backend Code:  ✅ COMPLETE (reference)
+  Integration:   ⏳ PENDING
+  Database:      📋 READY TO SETUP
+
+╔══════════════════════════════════════════════════════════════════╗
+║  📚 Full Details: README_DRAWING_METER_ENTRY.md                  ║
+║  🔧 Backend Guide: BACKEND_INTEGRATION_REFERENCE.md              ║
+╚══════════════════════════════════════════════════════════════════╝
+
+Last Updated: May 6, 2026
+

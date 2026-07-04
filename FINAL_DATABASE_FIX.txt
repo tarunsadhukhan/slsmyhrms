@@ -1,0 +1,151 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║    ✅ FINAL FIX - Database Column Name Corrected             ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+
+🐛 ROOT CAUSE FOUND!
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The database column is: mech_code (NOT mach_code)
+
+Error was:
+❌ "Unknown column 'mm.mach_code' in 'field list'"
+
+Fix Applied:
+✅ Changed query from mm.mach_code → mm.mech_code
+✅ Changed ORDER BY from mm.mach_code → mm.mech_code
+
+
+⚡ BACKEND SERVER RESTARTED WITH FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+The Flask server has been restarted with the correct column name.
+
+
+✅ TEST THE API NOW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Run this command to verify:
+
+curl -X GET 192.168.0.223:5051/machines?designation_id=199
+
+
+EXPECTED RESPONSE (Fixed):
+{
+  "status": "success",
+  "data": [
+    {
+      "id": 1344,
+      "name": "1001 WINDING1001",
+      "mech_code": "1001",
+      "machine_no": "1344"
+    },
+    {
+      "id": 1345,
+      "name": "1002 WINDING1002",
+      "mech_code": "1002",
+      "machine_no": "1345"
+    }
+  ],
+  "total": 3
+}
+
+Now the fields are:
+✅ id (not machine_id)
+✅ name (not machine_name)
+✅ mech_code (included)
+✅ machine_no (included)
+
+
+📱 NOW TEST ON YOUR PHONE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+IMPORTANT: You still need to install the NEW APK!
+
+1. Make sure backend is running (just restarted)
+2. Install the NEW APK on your phone
+3. Open MyHRMS app
+4. Go to Mark Attendance
+5. Select Designation
+6. Tap Machine Numbers
+
+YOU SHOULD NOW SEE:
+✅ 1001 WINDING1001
+✅ 1002 WINDING1002
+✅ 1003 WINDING1003
+
+NOT "No name"!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🔧 WHAT WAS CHANGED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: app.py (Backend)
+
+OLD (Wrong):
+   SELECT mm.mach_code    ← Wrong column name!
+   ORDER BY mm.mach_code
+
+NEW (Correct):
+   SELECT mm.mech_code    ← Correct column name!
+   ORDER BY mm.mech_code
+
+AND:
+   Response now maps:
+   • machine_id → id
+   • machine_name → name
+   • mech_code → mech_code
+   • mech_shr_code → machine_no
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+📋 COMPLETE CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Backend code fixed (mech_code not mach_code)
+✅ Backend server restarted
+✅ Frontend code already fixed (from previous build)
+✅ APK already built with frontend fix
+□ INSTALL APK ON PHONE ← DO THIS NOW!
+□ TEST machine names display
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🚀 FINAL STEPS TO COMPLETE FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Backend server is NOW running with correct code ✅
+
+2. Install APK on your phone:
+   Location: E:\sjm\MyHrms\app\build\outputs\apk\debug\app-debug.apk
+   Method: Send via WhatsApp, install on phone
+
+3. Test:
+   • Open app
+   • Mark Attendance
+   • Select Designation
+   • Tap Machine Numbers
+   • VERIFY: Shows "1001 WINDING1001" NOT "No name"
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+           🎉 THIS IS THE FINAL FIX! 🎉
+
+     Backend column name corrected: mach_code → mech_code
+     Backend server restarted with fix
+     APK ready to install
+
+     NOW TEST THE API, THEN INSTALL APK!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/white">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <!-- Title -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Edit Attendance"
+            android:textColor="@color/toolbar_dark_blue"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Employee Info (Read-only display) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Employee Code"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvEmpCode"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="13401"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:padding="12dp"
+            android:background="@drawable/bg_input_readonly"
+            android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Employee Name"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvEmpName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SHAMBHU MAHATO"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:padding="12dp"
+            android:background="@drawable/bg_input_readonly"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Date (Non-editable) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Date"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvDate"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="24-04-2026"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="@drawable/bg_input_readonly"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Spell/Shift (Non-editable) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Spell"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <TextView
+            android:id="@+id/tvSpell"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="A1"
+            android:textColor="@android:color/black"
+            android:textSize="16sp"
+            android:padding="12dp"
+            android:background="@drawable/bg_input_readonly"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Department (Editable Spinner) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Department"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinnerDepartment"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_spinner"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Designation (Editable Spinner) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Designation"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinnerDesignation"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_spinner"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Attendance Type -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Attendance Type"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <Spinner
+            android:id="@+id/spinnerAttType"
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:background="@drawable/bg_spinner"
+            android:padding="12dp"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Working Hours (Editable) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Working Hours"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/etWorkingHours"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="8.0"
+            android:inputType="numberDecimal"
+            android:textColor="@android:color/black"
+            android:padding="12dp"
+            android:background="@drawable/bg_input_rounded"
+            android:layout_marginBottom="12dp" />
+
+        <!-- Idle Hours (Editable) -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Idle Hours"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <EditText
+            android:id="@+id/etIdleHours"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="0.0"
+            android:inputType="numberDecimal"
+            android:textColor="@android:color/black"
+            android:padding="12dp"
+            android:background="@drawable/bg_input_rounded"
+            android:layout_marginBottom="20dp" />
+
+        <!-- Mc Nos (Machine Numbers) selector -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Mc Nos"
+            android:textColor="@android:color/black"
+            android:textSize="12sp"
+            android:layout_marginBottom="4dp" />
+
+        <LinearLayout
+            android:id="@+id/layoutMachineNumbers"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/bg_input_rounded"
+            android:padding="12dp"
+            android:minHeight="56dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:layout_marginBottom="20dp">
+
+            <TextView
+                android:id="@+id/tvSelectedMachines"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Tap to select machines"
+                android:textColor="@color/hint_text"
+                android:textSize="14sp" />
+
+            <TextView
+                android:id="@+id/tvMachineCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="0 machine(s) selected"
+                android:textColor="@color/toolbar_dark_blue"
+                android:textSize="11sp"
+                android:layout_marginTop="4dp"
+                android:visibility="gone" />
+        </LinearLayout>
+
+        <!-- Buttons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="end">
+
+            <Button
+                android:id="@+id/btnCancel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Cancel"
+                android:textColor="@android:color/black"
+                android:backgroundTint="@color/hint_text"
+                android:layout_marginEnd="8dp" />
+
+            <Button
+                android:id="@+id/btnSave"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Save"
+                android:textColor="@android:color/white"
+                android:backgroundTint="@color/toolbar_dark_blue" />
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
+

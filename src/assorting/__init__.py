@@ -1,0 +1,9 @@
+"""
+Assorting Module - Blueprint initialization
+Contains all Assorting Entry related routes (selectors, trolly validation, CRUD).
+"""
+from flask import Blueprint
+
+assorting_bp = Blueprint('assorting', __name__, url_prefix='/assorting')
+
+from . import routes  # noqa: E402,F401

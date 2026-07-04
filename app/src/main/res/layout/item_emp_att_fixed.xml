@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Fixed left columns row item -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="36dp"
+    android:orientation="horizontal">
+
+    <TextView android:id="@+id/tvCode"
+        android:layout_width="52dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvName"
+        android:layout_width="130dp" android:layout_height="match_parent"
+        android:gravity="center_vertical" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="4dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvDept"
+        android:layout_width="90dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="10sp"
+        android:textColor="@color/hint_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+</LinearLayout>
+

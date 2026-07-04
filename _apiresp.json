@@ -1,0 +1,20 @@
+TOTAL: 1
+{
+    "att_type":  "P",
+    "attendance_date":  "2026-03-17",
+    "attendance_time":  "14:03:27",
+    "department_name":  "Spinning",
+    "designation_name":  "Sliver Feeder",
+    "eb_id":  54733,
+    "emp_code":  "11621",
+    "emp_name":  "Sunil  Roy",
+    "exit_time":  "22:02:33",
+    "has_photo":  false,
+    "id":  20330,
+    "idle_hours":  0.0,
+    "machine_nos":  "",
+    "shift_hours":  8.0,
+    "shift_name":  "B",
+    "status":  "BIO",
+    "working_hours":  7.99
+}

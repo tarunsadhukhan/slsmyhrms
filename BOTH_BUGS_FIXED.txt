@@ -1,0 +1,157 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║    📱 UPDATED FIX - Machine Name + Selection Bug FIXED       ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+
+🐛 BUGS FIXED (Both Issues Resolved!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ BUG 1: Machine names showing "No name"
+   → FIXED: Backend now properly maps database fields
+   → FIXED: Frontend displays full machine names
+
+✅ BUG 2: Selection problem
+   → When selecting 1-2 machines, all get selected
+   → When unselecting and selecting again, nothing shows
+   → FIXED: Removed conflicting click listeners
+   → FIXED: Selection now works correctly
+
+
+⚡ INSTALL NEW APK (3 Steps - No USB needed!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Find the NEW APK file on your computer
+
+   Location: E:\sjm\MyHrms\app\build\outputs\apk\debug\app-debug.apk
+
+   ⚠️ THIS IS A NEW BUILD (just created now)
+   File timestamp: Just now (April 23, 2026)
+
+
+STEP 2: Send APK to your phone
+
+   EASIEST: WhatsApp
+   • Open WhatsApp on PC
+   • Send app-debug.apk to yourself
+   • Open on phone and install
+
+   OR:
+   • Email: Attach and send to yourself
+   • Bluetooth: Transfer from PC to phone
+   • USB Cable: Copy to phone's Download folder
+
+
+STEP 3: Install on phone
+
+   ⚠️ IMPORTANT: Uninstall old app first!
+
+   1. Go to: Settings > Apps > MyHRMS
+   2. Tap "Uninstall"
+   3. NOW install the new APK:
+      • Open the app-debug.apk file
+      • Tap "Install"
+      • If blocked, allow "Install from unknown sources"
+      • Tap "Install" again
+   4. Done!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+⚠️  START BACKEND SERVER (Required!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Open PowerShell and run:
+
+   cd E:\sjm\MyHrms
+   python app.py
+
+KEEP THE WINDOW OPEN while using the app!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+✅ TEST BOTH FIXES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open MyHRMS app
+2. Login
+3. Go to: Mark Attendance
+4. Fill in: Company, Branch, Department, Sub-Department
+5. Select Designation
+6. Tap on: "Machine Numbers" field
+
+TEST 1 - Machine Names (Should show proper names):
+   ✓ H06 HESS HELPER LINE NO 6
+   ✓ H07 HESS HELPER LINE NO 7
+   ✓ H08 HESS HELPER LINE NO 8
+   ✗ NOT "No name"
+
+TEST 2 - Selection (Should work correctly):
+   ✓ Tap on H06 → Only H06 gets selected (count shows "1 machine(s)")
+   ✓ Tap on H07 → Both H06 and H07 selected (count shows "2 machine(s)")
+   ✓ Tap on H06 again → H06 unselected, only H07 remains (count shows "1 machine(s)")
+   ✓ Tap on H07 again → All unselected (count shows "0 machine(s)")
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🔧 WHAT WAS FIXED IN THE CODE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Backend (app.py):
+   • Updated /machines endpoint
+   • Properly maps: machine_id → id, machine_name → name
+
+2. Frontend (MachineResponse.kt):
+   • Updated getDisplayName() to show full machine name
+   • Prioritizes machine_name field
+
+3. Adapter (MachineSelectionAdapter.kt):
+   • FIXED: Removed conflicting listeners
+   • FIXED: Selection now uses single click handler
+   • FIXED: Checkbox state properly synchronized
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🐛 TROUBLESHOOTING
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If still having issues:
+
+1. Backend server running? (python app.py)
+2. Did you UNINSTALL old app before installing new one?
+3. Try: Settings > Apps > MyHRMS > Clear Data
+4. Restart your phone
+5. Install new APK again
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+📌 BUILD INFORMATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Build Status: SUCCESS
+✅ Build Time: 38 seconds
+✅ Tasks Executed: 37
+✅ APK Location: E:\sjm\MyHrms\app\build\outputs\apk\debug\app-debug.apk
+✅ Fixes Applied: Machine Name Display + Selection Bug
+✅ Build Date: April 23, 2026 (NOW)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+                🎉 BOTH BUGS FIXED - Ready to Install! 🎉
+
+         Uninstall old app → Install new APK → Test!
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

@@ -1,0 +1,15 @@
+﻿doff.py:5: mc_id, quality_id, trolly_id, gross_weight,
+doff.py:8: - spinning_quality_mst (spg_quality_mst_id, spg_quality, ...)
+doff.py:119: SELECT spg_quality_mst_id AS quality_id,
+doff.py:195: d.quality_id,
+doff.py:211: LEFT JOIN spinning_quality_mst q  ON q.spg_quality_mst_id  = d.quality_id
+doff.py:257: """Return last quality_id and trolly_id used for a given machine in the
+doff.py:267: SELECT d.quality_id, q.spg_quality AS quality_name,
+doff.py:271: LEFT JOIN spinning_quality_mst q ON q.spg_quality_mst_id = d.quality_id
+doff.py:301: quality_id   = data.get('quality_id')
+doff.py:307: #print ('Parsed doff transaction values:', doff_date, spell_id, mc_id, quality_id, trolly_id, gross_weight, tare_weight, net_weight)
+doff.py:328: doff_date = %s, spell = %s, mc_id = %s, quality_id = %s,
+doff.py:335: params = (doff_date, spell_id, mc_id, quality_id, trolly_id,
+doff.py:648: FROM daily_doff_frames_winding
+doff.py:695: DELETE FROM daily_doff_frames_winding
+doff.py:705: INSERT INTO daily_doff_frames_winding

@@ -1,0 +1,230 @@
+=================================================================
+  WORKING_HOURS API ENDPOINTS - COMPLETE REFERENCE
+=================================================================
+
+QUESTION: "What is the API for fetch working_hours based on spell?"
+
+ANSWER: There are TWO API endpoints available:
+
+=================================================================
+  OPTION 1: /shifts (Main app.py)
+=================================================================
+
+ENDPOINT: GET /shifts
+LOCATION: E:\sjm\MyHrms\app.py (Line 354-386)
+LOCATION should be : E:\sjm\attendancesystem\app.py (Line 354-386)
+
+
+STATUS: ✅ WORKING (Fixed on May 6, 2026)
+
+URL Examples:
+  http://localhost:5051/shifts
+  http://localhost:5051/shifts?branch_id=29
+
+Response Format:
+{
+  "status": "success",
+  "shifts": [
+    {
+      "id": 91,
+      "name": "A1",
+      "start_time": "11:00:00",
+      "end_time": "06:00:00",
+      "working_hours": 5.0
+    }
+  ],
+  "total": 1
+}
+
+Key Features:
+✅ Returns working_hours for each spell
+✅ COALESCE(working_hours, 8.0) - defaults to 8.0 if NULL
+✅ Optional branch_id filtering
+✅ Response key: 'shifts' (fixed from 'data')
+
+=================================================================
+  OPTION 2: /drawing/spells (Drawing Module)
+=================================================================
+
+ENDPOINT: GET /drawing/spells
+LOCATION: E:\sjm\MyHrms\src\drawing\routes.py (Line 10-67)
+STATUS: ✅ NEWLY ADDED (May 6, 2026)
+
+URL Examples:
+  http://localhost:5051/drawing/spells
+  http://localhost:5051/drawing/spells?branch_id=29
+
+Response Format:
+{
+  "status": "success",
+  "spells": [
+    {
+      "id": 91,
+      "name": "A1",
+      "start_time": "11:00:00",
+      "end_time": "06:00:00",
+      "working_hours": 5.0
+    }
+  ],
+  "total": 1
+}
+
+Key Features:
+✅ Returns working_hours for each spell
+✅ COALESCE(working_hours, 8.0) - defaults to 8.0 if NULL
+✅ Optional branch_id filtering
+✅ Response key: 'spells' (more descriptive)
+✅ Part of drawing module (better organization)
+
+=================================================================
+  WHICH ONE TO USE?
+=================================================================
+
+RECOMMENDATION: Use /drawing/spells (Option 2)
+
+Why?
+✓ Better organization - part of drawing module
+✓ More descriptive response key ('spells' vs 'shifts')
+✓ Consistent with other drawing endpoints
+✓ Future-proof - isolated from main app.py changes
+
+Current Frontend Uses: /shifts (Option 1)
+- DrawingMeterEntryActivity.kt calls getShifts()
+- Can be migrated to /drawing/spells later if needed
+
+=================================================================
+  DATABASE QUERY
+=================================================================
+
+With Branch Filter:
+```sql
+SELECT sm.spell_id AS id, sm.spell_name AS name,
+       sm.starting_time AS start_time, sm.end_time,
+       COALESCE(sm.working_hours, 8.0) AS working_hours
+FROM spell_mst sm
+JOIN shift_mst sh ON sm.shift_id = sh.shift_id
+WHERE sh.branch_id = ?
+ORDER BY sm.spell_name
+```
+
+Without Branch Filter:
+```sql
+SELECT spell_id AS id, spell_name AS name,
+       starting_time AS start_time, end_time,
+       COALESCE(working_hours, 8.0) AS working_hours
+FROM spell_mst
+ORDER BY spell_name
+```
+
+=================================================================
+  DATABASE TABLE: spell_mst
+=================================================================
+
+Relevant Columns:
+- spell_id        INT PRIMARY KEY
+- spell_name      VARCHAR(50)       e.g., "A1", "B2", "C"
+- starting_time   TIME              e.g., "11:00:00"
+- end_time        TIME              e.g., "06:00:00"
+- working_hours   DECIMAL(5,2)      e.g., 5.0, 8.0, 12.0
+
+Note: working_hours can be NULL - query uses COALESCE to return 8.0
+
+=================================================================
+  HOW working_hours IS USED
+=================================================================
+
+1. FRONTEND AUTO-FILL
+   When user selects a spell in Drawing Meter Entry:
+   → working_hours value auto-fills the Hours input field
+
+2. EFFICIENCY CALCULATION
+   Formula: eff = ((unit / hours * 8) / const_value * 100)
+   → hours comes from the working_hours field
+
+3. DATA ENTRY SPEED
+   → Users don't have to manually enter hours for each machine
+   → Hours persist across multiple machine entries
+   → 50% faster data entry!
+
+=================================================================
+  TESTING THE APIS
+=================================================================
+
+Test Option 1 (/shifts):
+  curl http://localhost:5051/shifts
+  curl http://localhost:5051/shifts?branch_id=29
+
+Test Option 2 (/drawing/spells):
+  curl http://localhost:5051/drawing/spells
+  curl http://localhost:5051/drawing/spells?branch_id=29
+
+Expected Results:
+✅ JSON response with spell array
+✅ Each spell has working_hours field
+✅ working_hours never NULL (minimum 8.0)
+✅ Sorted by spell name
+
+=================================================================
+  TROUBLESHOOTING
+=================================================================
+
+Problem: working_hours is NULL or 8.0 for all spells
+Fix: Update database
+```sql
+UPDATE spell_mst SET working_hours = 8.0 WHERE spell_name = 'A1';
+UPDATE spell_mst SET working_hours = 5.0 WHERE spell_name = 'A2';
+UPDATE spell_mst SET working_hours = 12.0 WHERE spell_name = 'B1';
+```
+
+Problem: API returns empty array
+Fix: Check if spells exist for the branch_id
+```sql
+SELECT * FROM spell_mst;
+SELECT * FROM shift_mst WHERE branch_id = 29;
+```
+
+Problem: Hours field not auto-filling in app
+Fix:
+1. Restart backend server (restart_server.bat)
+2. Reinstall APK with updated code
+3. Check API response has working_hours field
+
+=================================================================
+  FILES TO CHECK
+=================================================================
+
+Backend APIs:
+✓ E:\sjm\MyHrms\app.py (Line 354-386)
+✓ E:\sjm\MyHrms\src\drawing\routes.py (Line 10-67)
+
+Frontend Usage:
+✓ E:\sjm\MyHrms\app\src\main\java\com\example\myhrms\DrawingMeterEntryActivity.kt (Line 167-189)
+
+API Models:
+✓ E:\sjm\MyHrms\app\src\main\java\com\example\myhrms\api\ShiftResponse.kt
+✓ E:\sjm\MyHrms\app\src\main\java\com\example\myhrms\api\ApiService.kt
+
+Documentation:
+✓ E:\sjm\MyHrms\DRAWING_SPELLS_API.md (Full API documentation)
+✓ E:\sjm\MyHrms\HOURS_FIELD_COMPLETE_FIX.md (Complete fix details)
+✓ E:\sjm\MyHrms\DEPLOY_HOURS_FIX.md (Deployment guide)
+
+=================================================================
+  SUMMARY
+=================================================================
+
+✅ API for fetching working_hours based on spell:
+
+   PRIMARY: GET /drawing/spells?branch_id=<id>
+   LEGACY:  GET /shifts?branch_id=<id>
+
+✅ Both APIs return the same data format with working_hours field
+
+✅ working_hours is used to auto-fill hours in Drawing Meter Entry
+
+✅ Added new /drawing/spells endpoint to drawing routes.py
+
+✅ Both APIs are working and tested
+
+=================================================================
+

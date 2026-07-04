@@ -1,0 +1,367 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F2F2F2">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#1E1E1E"
+        app:titleTextColor="@color/white">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Spinning Doff Entry"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </androidx.appcompat.widget.Toolbar>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <!-- ═══ ENTRY CARD ═══ -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:id="@+id/tvEntryTitle"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="New Doff Entry"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#1E1E1E"
+                        android:layout_marginBottom="10dp" />
+
+                    <!-- Row: Date | Spell -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="2"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Date" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <LinearLayout
+                                android:id="@+id/btnEntryDate"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingStart="10dp"
+                                android:paddingEnd="6dp">
+                                <TextView
+                                    android:id="@+id/tvEntryDate"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:textColor="#000000"
+                                    android:textSize="13sp" />
+                                <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                                    android:src="@drawable/ic_calendar" app:tint="#1565C0" />
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Spell" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <Spinner
+                                android:id="@+id/spEntrySpell"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="8dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Row: Machine | Trolly -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="2"
+                        android:layout_marginBottom="8dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Machine" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <Spinner
+                                android:id="@+id/spEntryMachine"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="8dp" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="5dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Trolly" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <Spinner
+                                android:id="@+id/spEntryTrolly"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="8dp" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Row: Quality (full width) -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="8dp">
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                            android:text="Quality" android:textColor="#000000" android:textSize="12sp"
+                            android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                        <Spinner
+                            android:id="@+id/spEntryQuality"
+                            android:layout_width="match_parent"
+                            android:layout_height="42dp"
+                            android:background="@drawable/bg_input_rounded_light"
+                            android:paddingStart="8dp" />
+                    </LinearLayout>
+
+
+                    <!-- Row: Gross | Tare | Net -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="3"
+                        android:layout_marginBottom="12dp">
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="4dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Gross Wt" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etEntryGross"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="numberDecimal"
+                                android:textColor="#000000"
+                                android:textSize="13sp"
+                                android:hint="0.000" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginHorizontal="4dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Tare Wt" android:textColor="#000000" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etEntryTare"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="numberDecimal"
+                                android:textColor="#000000"
+                                android:textSize="13sp"
+                                android:hint="0.000" />
+                        </LinearLayout>
+
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginStart="4dp">
+                            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                                android:text="Net Wt" android:textColor="#1565C0" android:textSize="12sp"
+                                android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etEntryNet"
+                                android:layout_width="match_parent"
+                                android:layout_height="42dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:inputType="numberDecimal"
+                                android:textColor="#1565C0"
+                                android:textSize="13sp"
+                                android:hint="0.000"
+                                android:focusable="false" />
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- Save / Reset buttons -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="3">
+
+                        <Button
+                            android:id="@+id/btnEntrySave"
+                            android:layout_width="0dp"
+                            android:layout_weight="2"
+                            android:layout_height="46dp"
+                            android:text="SAVE"
+                            android:textColor="#FFFFFF"
+                            android:backgroundTint="#1565C0"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="6dp" />
+
+                        <Button
+                            android:id="@+id/btnEntryReset"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="46dp"
+                            android:text="CLEAR"
+                            android:textColor="#FFFFFF"
+                            android:backgroundTint="#757575"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ═══ LIST FILTER + HEADER ═══ -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="6dp"
+                app:cardCornerRadius="8dp"
+                app:cardElevation="2dp"
+                app:cardBackgroundColor="#FFFFFF">
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:padding="8dp"
+                    android:gravity="center_vertical">
+
+                    <LinearLayout
+                        android:id="@+id/btnFilterDate"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_input_rounded_light"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="6dp"
+                        android:layout_marginEnd="6dp">
+                        <TextView
+                            android:id="@+id/tvFilterDate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="#000000"
+                            android:textSize="12sp" />
+                        <ImageView android:layout_width="16dp" android:layout_height="16dp"
+                            android:src="@drawable/ic_calendar" app:tint="#1565C0" />
+                    </LinearLayout>
+
+                    <Spinner
+                        android:id="@+id/spFilterSpell"
+                        android:layout_width="0dp"
+                        android:layout_height="40dp"
+                        android:layout_weight="1"
+                        android:background="@drawable/bg_input_rounded_light"
+                        android:paddingStart="8dp"
+                        android:layout_marginEnd="6dp" />
+
+                    <Button
+                        android:id="@+id/btnSearch"
+                        android:layout_width="wrap_content"
+                        android:layout_height="40dp"
+                        android:text="Search"
+                        android:textColor="#FFFFFF"
+                        android:backgroundTint="#1565C0"
+                        android:textSize="12sp" />
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <ProgressBar
+                android:id="@+id/progressBar"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_horizontal"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/tvEmpty"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No records found"
+                android:gravity="center"
+                android:textColor="#888888"
+                android:textSize="13sp"
+                android:padding="16dp"
+                android:visibility="gone" />
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvDoff"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false" />
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>
+

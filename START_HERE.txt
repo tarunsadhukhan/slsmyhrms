@@ -1,0 +1,87 @@
+=================================================================
+  HOURS FIELD FIX - READY TO BUILD AND DEPLOY
+=================================================================
+
+DATE: May 6, 2026
+STATUS: ✅ Code Complete - Ready for Build
+
+-----------------------------------------------------------------
+  WHAT'S BEEN FIXED
+-----------------------------------------------------------------
+
+✅ Hours auto-fill from spell selection
+✅ Hours persist after saving entry
+✅ Hours update when spell changes
+✅ Backend API returns correct format
+
+-----------------------------------------------------------------
+  TO BUILD THE APK
+-----------------------------------------------------------------
+
+OPTION 1 - Double-click this file:
+  E:\sjm\MyHrms\BUILD.bat
+
+OPTION 2 - Open Command Prompt and run:
+  cd E:\sjm\MyHrms
+  gradlew.bat assembleDebug
+
+OPTION 3 - See detailed instructions:
+  E:\sjm\MyHrms\BUILD_INSTRUCTIONS.md
+
+-----------------------------------------------------------------
+  AFTER BUILDING
+-----------------------------------------------------------------
+
+1. APK will be at:
+   E:\sjm\MyHrms\app\build\outputs\apk\debug\app-debug.apk
+
+2. RESTART BACKEND SERVER (CRITICAL!):
+   Double-click: E:\sjm\MyHrms\restart_server.bat
+
+3. Install APK on Android device
+
+4. Test hours field in Drawing Meter Entry
+
+-----------------------------------------------------------------
+  FILES CHANGED
+-----------------------------------------------------------------
+
+Frontend: DrawingMeterEntryActivity.kt
+  ✓ Line 108-117: Fixed spell change listener
+  ✓ Line 178-183: Auto-fill hours on load
+  ✓ Line 384-389: Preserve hours after save
+
+Backend: app.py
+  ✓ Line 383: Returns 'shifts' key (was 'data')
+
+-----------------------------------------------------------------
+  TESTING CHECKLIST
+-----------------------------------------------------------------
+
+□ Hours auto-populate when opening screen
+□ Hours update when changing spell
+□ Hours remain after saving entry
+□ Hours persist across multiple machine entries
+
+-----------------------------------------------------------------
+  DOCUMENTATION
+-----------------------------------------------------------------
+
+Quick Start: README_HOURS_FIX.txt
+Build Help: BUILD_INSTRUCTIONS.md
+Deploy Guide: DEPLOY_HOURS_FIX.md
+Technical: HOURS_FIELD_COMPLETE_FIX.md
+
+-----------------------------------------------------------------
+  NEED HELP?
+-----------------------------------------------------------------
+
+If build fails, see BUILD_INSTRUCTIONS.md for:
+- Troubleshooting steps
+- Alternative build methods
+- Common error solutions
+
+=================================================================
+  BUILD AND TEST - ALL READY! 🚀
+=================================================================
+

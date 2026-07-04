@@ -1,0 +1,423 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F2F2F2">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#1E1E1E"
+        app:titleTextColor="@color/white">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Spg Doff Entry (1)"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </androidx.appcompat.widget.Toolbar>
+
+    <androidx.core.widget.NestedScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="10dp">
+
+            <!-- ═══ ENTRY CARD ═══ -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="14dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Spg Doff Entry (1)"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="#1E1E1E"
+                        android:layout_marginBottom="12dp" />
+
+                    <!-- ROW 1: Date | Spell -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="2"
+                        android:layout_marginBottom="10dp">
+
+                        <!-- Date -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="6dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Date"
+                                android:textColor="#000000"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="3dp"/>
+                            <LinearLayout
+                                android:id="@+id/btnEntryDate"
+                                android:layout_width="match_parent"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:gravity="center_vertical"
+                                android:orientation="horizontal"
+                                android:paddingStart="10dp"
+                                android:paddingEnd="10dp"
+                                android:clickable="true"
+                                android:focusable="true">
+                                <ImageView
+                                    android:layout_width="18dp"
+                                    android:layout_height="18dp"
+                                    android:src="@drawable/ic_calendar"
+                                    android:layout_marginEnd="6dp"
+                                    app:tint="#555555"/>
+                                <TextView
+                                    android:id="@+id/tvEntryDate"
+                                    android:layout_width="0dp"
+                                    android:layout_height="wrap_content"
+                                    android:layout_weight="1"
+                                    android:textColor="#1E1E1E"
+                                    android:textSize="14sp"/>
+                            </LinearLayout>
+                        </LinearLayout>
+
+                        <!-- Spell -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Spell"
+                                android:textColor="#000000"
+                                android:textSize="12sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="3dp"/>
+                            <Spinner
+                                android:id="@+id/spEntrySpell"
+                                android:layout_width="match_parent"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:paddingStart="10dp"
+                                android:paddingEnd="10dp"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                    <!-- ROW 2: Mech Posting Code Buttons (scrollable) -->
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Mech Posting Code"
+                        android:textColor="#000000"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:layout_marginBottom="4dp"/>
+
+                    <HorizontalScrollView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:scrollbars="none"
+                        android:layout_marginBottom="10dp">
+                        <LinearLayout
+                            android:id="@+id/llMechCodes"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:orientation="horizontal"
+                            android:paddingBottom="4dp"/>
+                    </HorizontalScrollView>
+
+                    <TextView
+                        android:id="@+id/tvMechCodesStatus"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text=""
+                        android:textSize="12sp"
+                        android:textColor="#777777"
+                        android:layout_marginBottom="8dp"
+                        android:visibility="gone"/>
+
+                    <!-- ROW 3: Trolly No -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_marginBottom="10dp">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Trolly No"
+                            android:textColor="#000000"
+                            android:textSize="12sp"
+                            android:textStyle="bold"
+                            android:layout_marginBottom="3dp"/>
+                        <EditText
+                            android:id="@+id/etTrollyNo"
+                            android:layout_width="match_parent"
+                            android:layout_height="44dp"
+                            android:background="@drawable/bg_input_rounded_light"
+                            android:hint="Enter Trolly No"
+                            android:inputType="number"
+                            android:paddingStart="12dp"
+                            android:paddingEnd="12dp"
+                            android:textSize="14sp"
+                            android:textColor="#1E1E1E"
+                            android:imeOptions="actionNext"/>
+                        <TextView
+                            android:id="@+id/tvTrollyInfo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text=""
+                            android:textSize="11sp"
+                            android:layout_marginTop="2dp"/>
+                    </LinearLayout>
+
+                    <!-- ROW 4: Gross Wt | Tare Wt | Net Wt | Save -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:weightSum="4"
+                        android:layout_marginBottom="4dp">
+
+                        <!-- Gross Wt -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="4dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Gross Wt"
+                                android:textColor="#000000"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etGrossWt"
+                                android:layout_width="match_parent"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:hint="0.000"
+                                android:inputType="numberDecimal"
+                                android:paddingStart="8dp"
+                                android:paddingEnd="8dp"
+                                android:textSize="13sp"
+                                android:textColor="#1E1E1E"
+                                android:imeOptions="actionNext"/>
+                        </LinearLayout>
+
+                        <!-- Tare Wt -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="4dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Tare Wt"
+                                android:textColor="#000000"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etTareWt"
+                                android:layout_width="match_parent"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:hint="0.000"
+                                android:inputType="numberDecimal"
+                                android:paddingStart="8dp"
+                                android:paddingEnd="8dp"
+                                android:textSize="13sp"
+                                android:textColor="#1E1E1E"
+                                android:focusable="false"
+                                android:editable="false"/>
+                        </LinearLayout>
+
+                        <!-- Net Wt -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical"
+                            android:layout_marginEnd="4dp">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Net Wt"
+                                android:textColor="#000000"
+                                android:textSize="11sp"
+                                android:textStyle="bold"
+                                android:layout_marginBottom="3dp"/>
+                            <EditText
+                                android:id="@+id/etNetWt"
+                                android:layout_width="match_parent"
+                                android:layout_height="44dp"
+                                android:background="@drawable/bg_input_rounded_light"
+                                android:hint="0.000"
+                                android:inputType="numberDecimal"
+                                android:paddingStart="8dp"
+                                android:paddingEnd="8dp"
+                                android:textSize="13sp"
+                                android:textColor="#1E1E1E"
+                                android:focusable="false"
+                                android:editable="false"/>
+                        </LinearLayout>
+
+                        <!-- Save Button -->
+                        <LinearLayout
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:orientation="vertical">
+                            <TextView
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text=" "
+                                android:textSize="11sp"
+                                android:layout_marginBottom="3dp"/>
+                            <Button
+                                android:id="@+id/btnSave"
+                                android:layout_width="match_parent"
+                                android:layout_height="44dp"
+                                android:text="Save"
+                                android:textSize="13sp"
+                                android:textColor="#FFFFFF"
+                                android:backgroundTint="#1565C0"
+                                android:textStyle="bold"/>
+                        </LinearLayout>
+                    </LinearLayout>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+            <!-- ═══ SUMMARY CARD ═══ -->
+            <androidx.cardview.widget.CardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="10dp"
+                app:cardCornerRadius="10dp"
+                app:cardElevation="4dp"
+                app:cardBackgroundColor="#FFFFFF">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <!-- Summary Title with Icon -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical"
+                        android:layout_marginBottom="8dp">
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:text="Summary"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:textColor="#1E1E1E"/>
+
+                        <ImageView
+                            android:id="@+id/ivQualityShiftReport"
+                            android:layout_width="28dp"
+                            android:layout_height="28dp"
+                            android:src="@drawable/ic_report"
+                            android:padding="4dp"
+                            android:background="?android:attr/selectableItemBackgroundBorderless"
+                            android:contentDescription="View Quality Shift Report"
+                            app:tint="#1565C0"/>
+
+                    </LinearLayout>
+
+                    <!-- Table header -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:orientation="horizontal"
+                        android:background="#1565C0"
+                        android:gravity="center_vertical"
+                        android:paddingStart="8dp"
+                        android:paddingEnd="8dp">
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:text="Mc No"
+                            android:textColor="#FFFFFF" android:textStyle="bold"
+                            android:textSize="12sp" android:gravity="center"/>
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="3" android:text="Weights"
+                            android:textColor="#FFFFFF" android:textStyle="bold"
+                            android:textSize="12sp" android:gravity="center"/>
+                        <TextView android:layout_width="0dp" android:layout_height="wrap_content"
+                            android:layout_weight="1" android:text="Doffs"
+                            android:textColor="#FFFFFF" android:textStyle="bold"
+                            android:textSize="12sp" android:gravity="center"/>
+                    </LinearLayout>
+
+                    <androidx.recyclerview.widget.RecyclerView
+                        android:id="@+id/rvSummary"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:nestedScrollingEnabled="false"/>
+
+                    <TextView
+                        android:id="@+id/tvSummaryEmpty"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="No records for selected date / spell"
+                        android:textColor="#999999"
+                        android:textSize="13sp"
+                        android:gravity="center"
+                        android:padding="16dp"
+                        android:visibility="gone"/>
+
+                    <ProgressBar
+                        android:id="@+id/pbSummary"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:visibility="gone"/>
+
+                </LinearLayout>
+            </androidx.cardview.widget.CardView>
+
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+</LinearLayout>
+

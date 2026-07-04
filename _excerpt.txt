@@ -1,0 +1,20 @@
+381:                    COALESCE(d.desig, '')         AS designation_name,
+382:                    COALESCE(da.spell, '')        AS shift_name,
+383:                    da.attendance_date,
+384:                    TIME(da.entry_time)           AS attendance_time,
+385: 				   time(da.exit_time )	         as exit_time,
+386:                    da.attendance_source          AS status,
+387:                    COALESCE(da.attendance_type, 'R') AS att_type,
+388:                    COALESCE(da.spell_hours,   0) AS shift_hours,
+389:                    COALESCE(da.working_hours, 0) AS working_hours,
+390:                    COALESCE(da.idle_hours,    0) AS idle_hours,
+391:                    IF(EXISTS(
+392:                      SELECT 1
+393:                      FROM employee_face_mst ef
+394:                      WHERE ef.eb_id = da.eb_id AND ef.active = 1
+395:                    ), 1, 0) AS has_photo
+396:             FROM daily_attendance da
+397:             LEFT JOIN hrms_ed_personal_details p ON da.eb_id = p.eb_id
+398:             LEFT JOIN hrms_ed_official_details o ON da.eb_id = o.eb_id
+399:             LEFT JOIN sub_dept_mst    s ON da.worked_department_id     = s.sub_dept_id
+400:             LEFT JOIN designation_mst d ON da.worked_designation_id = d.designation_id

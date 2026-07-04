@@ -1,0 +1,164 @@
+═══════════════════════════════════════════════════════════════
+  HOURS NOT CHANGING ON SPELL CHANGE - COMPLETE FIX
+═══════════════════════════════════════════════════════════════
+
+ISSUE: Hours field doesn't update when changing spell in Drawing Meter Entry
+
+ROOT CAUSE: Backend at e:\sjm\attendancesystem doesn't have updated code
+
+═══════════════════════════════════════════════════════════════
+  QUICK FIX (3 STEPS)
+═══════════════════════════════════════════════════════════════
+
+1. DEPLOY BACKEND:
+   copy /Y "E:\sjm\MyHrms\app.py" "e:\sjm\attendancesystem\app.py"
+
+2. RESTART SERVER:
+   cd e:\sjm\attendancesystem
+   python app.py
+
+3. TEST API:
+   http://localhost:5051/shifts
+   (Should show "shifts" and "working_hours" fields)
+
+4. REBUILD APK:
+   cd E:\sjm\MyHrms
+   gradlew.bat assembleDebug
+
+5. INSTALL & TEST
+
+═══════════════════════════════════════════════════════════════
+  AUTOMATED FIX
+═══════════════════════════════════════════════════════════════
+
+Run: DEPLOY_AND_TEST.bat
+
+This script does everything automatically!
+
+═══════════════════════════════════════════════════════════════
+  WHY IT'S NOT WORKING
+═══════════════════════════════════════════════════════════════
+
+✗ Backend code in E:\sjm\MyHrms\app.py is correct
+✗ Frontend code in DrawingMeterEntryActivity.kt is correct
+✗ BUT backend server runs from e:\sjm\attendancesystem
+✗ Need to COPY updated code there and RESTART server
+
+═══════════════════════════════════════════════════════════════
+  WHAT THE CODE DOES
+═══════════════════════════════════════════════════════════════
+
+Frontend (DrawingMeterEntryActivity.kt Line 108-117):
+------------------------------------------------------
+When user changes spell:
+1. Clear form
+2. Get selected spell's working_hours
+3. Set hours field to that value
+4. Reload summary
+
+Backend (app.py Line 354-386):
+-------------------------------
+GET /shifts endpoint returns:
+{
+  "shifts": [
+    {"id": 91, "name": "A1", "working_hours": 5.0}
+  ]
+}
+
+Database (spell_mst table):
+---------------------------
+Each spell has working_hours column:
+- A1: 5.0 hours
+- A2: 3.0 hours
+- C: 8.0 hours
+
+═══════════════════════════════════════════════════════════════
+  TEST AFTER FIX
+═══════════════════════════════════════════════════════════════
+
+1. Open Drawing Meter Entry
+2. Select Spell "A1" → Hours should show "5"
+3. Select Spell "A2" → Hours should change to "3"
+4. Select Spell "C" → Hours should change to "8"
+5. Save entry → Hours should stay "8"
+6. Select another machine → Hours still "8"
+7. Change to "A1" → Hours should change to "5"
+
+═══════════════════════════════════════════════════════════════
+  VERIFICATION
+═══════════════════════════════════════════════════════════════
+
+✓ API Test:
+  http://localhost:5051/shifts
+  Should return JSON with "shifts" array and "working_hours" field
+
+✓ Database Test:
+  SELECT spell_name, working_hours FROM spell_mst;
+  Should show different hours for different spells
+
+✓ App Test:
+  Hours field updates when changing spell selection
+
+═══════════════════════════════════════════════════════════════
+  FILES INVOLVED
+═══════════════════════════════════════════════════════════════
+
+Backend (Development):
+  E:\sjm\MyHrms\app.py (Line 354-386)
+  ✅ Has correct code
+
+Backend (Production):
+  e:\sjm\attendancesystem\app.py
+  ⏳ NEEDS DEPLOYMENT
+
+Frontend:
+  E:\sjm\MyHrms\app\src\main\java\com\example\myhrms\
+    DrawingMeterEntryActivity.kt (Line 108-117)
+  ✅ Has correct code
+
+Database:
+  spell_mst table → working_hours column
+  ⏳ May need data update
+
+═══════════════════════════════════════════════════════════════
+  COMMON ERRORS
+═══════════════════════════════════════════════════════════════
+
+Error: API returns "data" instead of "shifts"
+Fix: Backend not deployed/restarted
+
+Error: working_hours field missing
+Fix: Backend has old code, deploy new version
+
+Error: working_hours is 8.0 for all spells
+Fix: Update database with correct hours per spell
+
+Error: Hours field empty in app
+Fix: Check API response, may need APK rebuild
+
+═══════════════════════════════════════════════════════════════
+  DEPLOYMENT CHECKLIST
+═══════════════════════════════════════════════════════════════
+
+□ Copy app.py to e:\sjm\attendancesystem
+□ Stop Flask server (Ctrl+C)
+□ Start Flask server (python app.py)
+□ Test API in browser
+□ Verify "shifts" key and "working_hours" field
+□ Rebuild Android APK
+□ Install APK on device
+□ Test hours change on spell selection
+
+═══════════════════════════════════════════════════════════════
+  SUMMARY
+═══════════════════════════════════════════════════════════════
+
+✅ Code is ready and correct
+⏳ Just needs DEPLOYMENT to e:\sjm\attendancesystem
+⏳ Flask server needs RESTART
+⏳ APK needs REBUILD
+
+Run DEPLOY_AND_TEST.bat to fix everything!
+
+═══════════════════════════════════════════════════════════════
+

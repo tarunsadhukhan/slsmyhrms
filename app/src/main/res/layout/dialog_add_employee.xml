@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <!-- Face Photo Section -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_horizontal"
+            android:orientation="vertical"
+            android:layout_marginBottom="16dp">
+
+            <FrameLayout
+                android:layout_width="120dp"
+                android:layout_height="120dp">
+
+                <ImageView
+                    android:id="@+id/ivFacePhoto"
+                    android:layout_width="120dp"
+                    android:layout_height="120dp"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/ic_face"
+                    app:tint="@color/hint_text"
+                    android:background="@drawable/bg_input_rounded"
+                    android:padding="20dp"
+                    android:contentDescription="Face Photo" />
+
+                <!-- Camera icon overlay -->
+                <ImageView
+                    android:id="@+id/btnCapturePhoto"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_gravity="bottom|end"
+                    android:src="@drawable/ic_camera"
+                    android:background="@drawable/bg_serial_circle"
+                    android:padding="6dp"
+                    android:contentDescription="Take Photo" />
+
+            </FrameLayout>
+
+            <TextView
+                android:id="@+id/tvPhotoStatus"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:text="Tap camera to register face"
+                android:textColor="@color/hint_text"
+                android:textSize="12sp" />
+
+        </LinearLayout>
+
+        <!-- Employee Code -->
+        <EditText
+            android:id="@+id/etEmpCode"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_input_rounded"
+            android:hint="Employee Code (e.g. EMP001)"
+            android:textColorHint="@color/hint_text"
+            android:textColor="@color/black"
+            android:inputType="text"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textSize="15sp" />
+
+        <!-- Employee Name -->
+        <EditText
+            android:id="@+id/etEmpName"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="12dp"
+            android:background="@drawable/bg_input_rounded"
+            android:hint="Employee Name"
+            android:textColorHint="@color/hint_text"
+            android:textColor="@color/black"
+            android:inputType="textPersonName"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textSize="15sp" />
+
+        <!-- Department Dropdown -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="4dp"
+            android:text="Department"
+            android:textColor="@color/label_text"
+            android:textSize="13sp" />
+
+        <Spinner
+            android:id="@+id/spinnerDepartment"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_input_rounded"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp" />
+
+        <!-- Designation/Occupation Dropdown -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="4dp"
+            android:text="Designation"
+            android:textColor="@color/label_text"
+            android:textSize="13sp" />
+
+        <Spinner
+            android:id="@+id/spinnerDesignation"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_input_rounded"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp" />
+
+        <!-- Shift Dropdown -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="14dp"
+            android:layout_marginBottom="4dp"
+            android:text="Shift"
+            android:textColor="@color/label_text"
+            android:textSize="13sp" />
+
+        <Spinner
+            android:id="@+id/spinnerShift"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@drawable/bg_input_rounded"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp" />
+
+    </LinearLayout>
+
+</ScrollView>
+

@@ -1,0 +1,142 @@
+╔═══════════════════════════════════════════════════════════════╗
+║                                                               ║
+║         📱 INSTALL MyHRMS - MACHINE NAME FIX                 ║
+║                                                               ║
+╚═══════════════════════════════════════════════════════════════╝
+
+
+⚡ QUICK INSTALL (3 Steps - No USB needed!)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1: Find the APK file on your computer
+
+   Location: E:\sjm\MyHrms\app\build\outputs\apk\debug\app-debug.apk
+
+   (Just copy this path and paste in Windows Explorer address bar)
+
+
+STEP 2: Send APK to your phone
+
+   Choose any method:
+   • WhatsApp: Send file to yourself, open on phone
+   • Email: Attach and send to yourself
+   • Bluetooth: Transfer from PC to phone
+   • USB Cable: Copy to phone's Download folder
+
+
+STEP 3: Install on phone
+
+   • Open the app-debug.apk file on your phone
+   • Tap "Install"
+   • If blocked, go to Settings > Allow unknown sources
+   • Tap "Install" again
+   • Done!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+⚠️  BEFORE TESTING - START BACKEND SERVER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open PowerShell
+
+2. Type these commands:
+
+   cd E:\sjm\MyHrms
+   python app.py
+
+3. KEEP THE WINDOW OPEN while using the app!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+✅ TEST IF IT WORKED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. Open MyHRMS app on your phone
+
+2. Login
+
+3. Go to: Mark Attendance
+
+4. Fill in:
+   • Company
+   • Branch
+   • Department
+   • Sub-Department
+   • Designation ← Select one!
+
+5. Tap on: "Machine Numbers" field
+
+6. NOW YOU SHOULD SEE:
+
+   ✓ H06 HESS HELPER LINE NO 6
+   ✓ H07 HESS HELPER LINE NO 7
+   ✓ H08 HESS HELPER LINE NO 8
+
+   NOT "No name" anymore!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+🐛 TROUBLESHOOTING - Still "No name"?
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Try these in order:
+
+1. Make sure backend server is running (python app.py)
+
+2. Uninstall old MyHRMS app completely
+
+3. Restart your phone
+
+4. Install new app-debug.apk again
+
+5. Clear app data:
+   Settings > Apps > MyHRMS > Storage > Clear Data
+
+6. Try again!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+📌 SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Backend code: FIXED
+✅ Frontend code: FIXED
+✅ APK built: SUCCESS
+✅ Location: E:\sjm\MyHrms\app\build\outputs\apk\debug\app-debug.apk
+
+📱 ACTION NEEDED: Install the APK on your phone!
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+💡 HELPFUL FILES CREATED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+• E:\sjm\MyHrms\INSTALL_APP_NOW.html
+  → Open in browser for visual guide
+
+• E:\sjm\MyHrms\install_apk.bat
+  → Double-click for auto-install (USB method)
+
+• E:\sjm\MyHrms\READY_TO_INSTALL.md
+  → Complete documentation
+
+• E:\sjm\MyHrms\INSTALL_NOW.txt
+  → This simple guide
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+                    🎉 Ready to Install! 🎉
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+

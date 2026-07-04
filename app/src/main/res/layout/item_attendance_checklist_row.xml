@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Attendance Checklist grid row (widths must match header in activity_attendance_checklist.xml) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="36dp"
+    android:orientation="horizontal">
+
+    <TextView android:id="@+id/tvDate"
+        android:layout_width="80dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvSpell"
+        android:layout_width="64dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvEbNo"
+        android:layout_width="64dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvEmpName"
+        android:layout_width="140dp" android:layout_height="match_parent"
+        android:gravity="center_vertical" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="4dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvDept"
+        android:layout_width="110dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="10sp"
+        android:textColor="@color/hint_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvDesignation"
+        android:layout_width="110dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="10sp"
+        android:textColor="@color/hint_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvSource"
+        android:layout_width="70dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvAttType"
+        android:layout_width="50dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvWorkingHours"
+        android:layout_width="64dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+</LinearLayout>

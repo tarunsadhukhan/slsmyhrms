@@ -1,0 +1,7 @@
+e:\sjm\AttendanceSystem
+e:\sjm\back
+e:\sjm\deploy
+e:\sjm\MyHrms
+e:\sjm\vowerp3be
+e:\sjm\vowerp3ui
+e:\sjm\vowerp3ui-1

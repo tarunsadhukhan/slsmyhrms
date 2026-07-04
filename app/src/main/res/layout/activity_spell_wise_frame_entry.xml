@@ -1,0 +1,405 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="#F2F2F2">
+
+    <androidx.appcompat.widget.Toolbar
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="#1E1E1E"
+        app:titleTextColor="@color/white">
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Spell wise Frame Entry"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp"
+            android:textStyle="bold" />
+    </androidx.appcompat.widget.Toolbar>
+
+    <!-- ═══ Filter card ═══ -->
+    <androidx.cardview.widget.CardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="10dp"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="#FFFFFF">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- Row: Date | Spell -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="5dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Date" android:textColor="#000000" android:textSize="12sp"
+                        android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                    <LinearLayout
+                        android:id="@+id/btnEntryDate"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:background="@drawable/bg_input_rounded_light"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal"
+                        android:paddingStart="10dp"
+                        android:paddingEnd="6dp">
+                        <TextView
+                            android:id="@+id/tvEntryDate"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:textColor="#000000"
+                            android:textSize="13sp" />
+                        <ImageView android:layout_width="18dp" android:layout_height="18dp"
+                            android:src="@drawable/ic_calendar" app:tint="#1565C0" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:layout_marginStart="5dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Spell" android:textColor="#000000" android:textSize="12sp"
+                        android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                    <Spinner
+                        android:id="@+id/spEntrySpell"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:background="@drawable/bg_input_rounded_light"
+                        android:paddingStart="8dp" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Row: Spinning / Winding toggle -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginBottom="6dp">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Type:"
+                    android:textColor="#000000"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:layout_marginEnd="10dp"/>
+
+                <Button
+                    android:id="@+id/btnTypeSpinning"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="S"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#1565C0"
+                    android:textStyle="bold"
+                    android:minWidth="60dp"
+                    android:layout_marginEnd="8dp"
+                    style="?attr/materialButtonStyle"/>
+
+                <Button
+                    android:id="@+id/btnTypeWinding"
+                    android:layout_width="wrap_content"
+                    android:layout_height="36dp"
+                    android:text="W"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#757575"
+                    android:textStyle="bold"
+                    android:minWidth="60dp"
+                    style="?attr/materialButtonStyle"/>
+
+            </LinearLayout>
+
+            <!-- Select All (Spinning mode only) -->
+            <LinearLayout
+                android:id="@+id/rowSelectAll"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="4dp">
+
+                <CheckBox
+                    android:id="@+id/cbSelectAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Select All"
+                    android:textColor="#1565C0"
+                    android:textStyle="bold" />
+
+                <TextView
+                    android:id="@+id/tvSelectedCount"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="end"
+                    android:textColor="#2E7D32"
+                    android:textStyle="bold"
+                    android:textSize="13sp" />
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- ═══ WINDING FORM card (visible only in W mode) ═══ -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardWindingForm"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginHorizontal="10dp"
+        android:layout_marginBottom="6dp"
+        android:visibility="gone"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="3dp"
+        app:cardBackgroundColor="#FFFFFF">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="12dp">
+
+            <!-- EB No + Name row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2"
+                android:layout_marginBottom="8dp">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginEnd="5dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="EB No" android:textColor="#000000" android:textSize="12sp"
+                        android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                    <EditText
+                        android:id="@+id/etEbNo"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:background="@drawable/bg_input_rounded_light"
+                        android:paddingStart="10dp"
+                        android:inputType="number"
+                        android:imeOptions="actionNext"
+                        android:textColor="#000000"
+                        android:textSize="14sp"
+                        android:hint="Enter EB No"
+                        android:textColorHint="#AAAAAA"/>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:layout_marginStart="5dp">
+                    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                        android:text="Name" android:textColor="#000000" android:textSize="12sp"
+                        android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                    <TextView
+                        android:id="@+id/tvEbName"
+                        android:layout_width="match_parent"
+                        android:layout_height="42dp"
+                        android:background="@drawable/bg_input_rounded_light"
+                        android:paddingStart="10dp"
+                        android:gravity="center_vertical"
+                        android:textColor="#000000"
+                        android:textSize="13sp"
+                        android:hint="Auto fill"
+                        android:textColorHint="#AAAAAA"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Quality row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginBottom="10dp">
+                <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+                    android:text="Quality" android:textColor="#000000" android:textSize="12sp"
+                    android:textStyle="bold" android:layout_marginBottom="3dp"/>
+                <Spinner
+                    android:id="@+id/spWindingQuality"
+                    android:layout_width="match_parent"
+                    android:layout_height="42dp"
+                    android:background="@drawable/bg_input_rounded_light"
+                    android:paddingStart="8dp"/>
+            </LinearLayout>
+
+            <!-- Save / Clear buttons -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <Button
+                    android:id="@+id/btnWindingSave"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="42dp"
+                    android:text="SAVE"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#1565C0"
+                    android:textStyle="bold"
+                    android:layout_marginEnd="6dp"/>
+
+                <Button
+                    android:id="@+id/btnWindingClear"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="42dp"
+                    android:text="CLEAR"
+                    android:textColor="#FFFFFF"
+                    android:backgroundTint="#757575"
+                    android:textStyle="bold"/>
+            </LinearLayout>
+
+        </LinearLayout>
+    </androidx.cardview.widget.CardView>
+
+    <!-- ═══ Spinning Frame list (S mode) ═══ -->
+    <FrameLayout
+        android:id="@+id/layoutSpinningList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:layout_marginHorizontal="10dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical">
+
+            <!-- Fallback banner (spinning) -->
+            <TextView
+                android:id="@+id/tvSpinningFallback"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#FFF3E0"
+                android:textColor="#E65100"
+                android:textSize="12sp"
+                android:padding="6dp"
+                android:gravity="center"
+                android:visibility="gone"/>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/rvFrames"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:clipToPadding="false"
+                android:paddingBottom="8dp" />
+        </LinearLayout>
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:visibility="gone" />
+
+        <TextView
+            android:id="@+id/tvEmpty"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:text="No frames available for this branch"
+            android:gravity="center"
+            android:textColor="#888888"
+            android:textSize="13sp"
+            android:padding="16dp"
+            android:visibility="gone" />
+    </FrameLayout>
+
+    <!-- ═══ Winding entries list (W mode) ═══ -->
+    <LinearLayout
+        android:id="@+id/layoutWindingList"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:layout_marginHorizontal="10dp"
+        android:visibility="gone">
+
+        <!-- Fallback banner -->
+        <TextView
+            android:id="@+id/tvWindingFallback"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="#FFF3E0"
+            android:textColor="#E65100"
+            android:textSize="12sp"
+            android:padding="6dp"
+            android:gravity="center"
+            android:visibility="gone"/>
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/rvWindingEntries"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingBottom="8dp" />
+
+    </LinearLayout>
+
+    <!-- ═══ Save button ═══ -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="10dp"
+        android:weightSum="3">
+
+        <Button
+            android:id="@+id/btnSave"
+            android:layout_width="0dp"
+            android:layout_weight="2"
+            android:layout_height="48dp"
+            android:text="SAVE"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#1565C0"
+            android:textStyle="bold"
+            android:layout_marginEnd="6dp" />
+
+        <Button
+            android:id="@+id/btnReload"
+            android:layout_width="0dp"
+            android:layout_weight="1"
+            android:layout_height="48dp"
+            android:text="RELOAD"
+            android:textColor="#FFFFFF"
+            android:backgroundTint="#757575"
+            android:textStyle="bold" />
+    </LinearLayout>
+
+</LinearLayout>
+

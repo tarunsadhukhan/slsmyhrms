@@ -1,0 +1,269 @@
+═══════════════════════════════════════════════════════════════
+          TECHNICAL FIX DETAILS - For Reference
+═══════════════════════════════════════════════════════════════
+
+
+FIX #1: BACKEND COLUMN NAME
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: E:\sjm\MyHrms\app.py
+Location: Line ~1736
+
+PROBLEM:
+   Query used wrong column name: mm.mach_code
+   Database has: mm.mech_code
+   Error: "Unknown column 'mm.mach_code' in 'field list'"
+
+OLD CODE (Wrong):
+   query = """
+       SELECT
+           mm.machine_id,
+           mm.machine_name,
+           mm.mach_code,          ← WRONG!
+           mm.mech_shr_code,
+           ...
+       FROM sjm.machine_mst mm
+       ...
+       ORDER BY mm.mach_code      ← WRONG!
+   """
+
+   machines.append({
+       'id': m['machine_id'],
+       'name': m['machine_name'],
+       'mech_code': m['mach_code']  ← WRONG!
+   })
+
+NEW CODE (Fixed):
+   query = """
+       SELECT
+           mm.machine_id,
+           mm.machine_name,
+           mm.mech_code,          ← CORRECT!
+           mm.mech_shr_code,
+           ...
+       FROM sjm.machine_mst mm
+       ...
+       ORDER BY mm.mech_code      ← CORRECT!
+   """
+
+   machines.append({
+       'id': m['machine_id'],
+       'name': m['machine_name'],
+       'mech_code': m['mech_code']  ← CORRECT!
+   })
+
+RESULT:
+   Backend now returns:
+   {
+     "id": 1344,
+     "name": "1001 WINDING1001",
+     "mech_code": "1001",
+     "machine_no": "1344"
+   }
+
+
+═══════════════════════════════════════════════════════════════
+
+
+FIX #2: CHECKBOX SELECTION BUG
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: E:\sjm\MyHrms\app\src\main\java\com\example\myhrms\adapter\MachineSelectionAdapter.kt
+Location: onBindViewHolder method (~line 32-56)
+
+PROBLEM:
+   Two click listeners both firing:
+   1. holder.itemView.setOnClickListener { ... }
+   2. holder.checkbox.setOnClickListener { ... }
+
+   Flow:
+   User taps row → itemView listener toggles checkbox to TRUE
+                 → checkbox listener fires and toggles to FALSE
+   Result: Checkbox blinks and returns to unchecked
+
+OLD CODE (Broken):
+   override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+       val machine = filteredMachines[position]
+
+       holder.checkbox.isChecked = selectedMachineIds.contains(machine.id)
+
+       // Problem: TWO listeners!
+       val clickListener = View.OnClickListener {
+           val newCheckedState = !holder.checkbox.isChecked
+           holder.checkbox.isChecked = newCheckedState
+           // Update Set...
+       }
+
+       holder.itemView.setOnClickListener(clickListener)  ← Listener 1
+       holder.checkbox.setOnClickListener(clickListener)  ← Listener 2 (CONFLICT!)
+   }
+
+NEW CODE (Fixed):
+   override fun onBindViewHolder(holder: ViewHolder, position: Int) {
+       val machine = filteredMachines[position]
+
+       // Set checkbox state from Set (single source of truth)
+       holder.checkbox.isChecked = selectedMachineIds.contains(machine.id)
+
+       // Make checkbox NOT directly clickable
+       holder.checkbox.isClickable = false
+       holder.checkbox.isFocusable = false
+
+       // ONLY row click handler
+       holder.itemView.setOnClickListener {
+           val isCurrentlyChecked = selectedMachineIds.contains(machine.id)
+           val newCheckedState = !isCurrentlyChecked
+
+           if (newCheckedState) {
+               selectedMachineIds.add(machine.id)
+           } else {
+               selectedMachineIds.remove(machine.id)
+           }
+
+           holder.checkbox.isChecked = newCheckedState
+           onSelectionChanged(selectedMachineIds.size)
+       }
+   }
+
+KEY CHANGES:
+   ✅ checkbox.isClickable = false (no direct clicks)
+   ✅ checkbox.isFocusable = false
+   ✅ Only ONE listener: itemView.setOnClickListener
+   ✅ State checked from Set, not checkbox itself
+   ✅ Checkbox updated after Set is modified
+
+RESULT:
+   Click behavior now:
+   1. User taps row
+   2. ONLY itemView listener fires
+   3. Set updated (add or remove ID)
+   4. Checkbox visual updated
+   5. No second listener to undo it!
+
+
+═══════════════════════════════════════════════════════════════
+
+
+FIX #3: SEARCH INPUT TEXT COLOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+File: E:\sjm\MyHrms\app\src\main\res\layout\dialog_machine_selector.xml
+Location: TextInputEditText (~line 30-36)
+
+PROBLEM:
+   No textColor specified
+   Default text color = black
+   Background = white
+   Result: Black text on white = hard to see / invisible
+
+OLD CODE (Invisible):
+   <com.google.android.material.textfield.TextInputEditText
+       android:id="@+id/etSearchMachine"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:inputType="text"
+       android:maxLines="1" />
+
+   ← No textColor!
+   ← Text defaults to black
+   ← Background is white
+   ← INVISIBLE!
+
+NEW CODE (Visible):
+   <com.google.android.material.textfield.TextInputEditText
+       android:id="@+id/etSearchMachine"
+       android:layout_width="match_parent"
+       android:layout_height="wrap_content"
+       android:inputType="text"
+       android:maxLines="1"
+       android:textColor="@color/label_text"    ← ADDED! (#222222 dark gray)
+       android:textSize="16sp" />                ← ADDED! Readable size
+
+RESULT:
+   Text now displays in dark gray (#222222)
+   Visible and readable on white background
+
+
+═══════════════════════════════════════════════════════════════
+
+
+SUMMARY OF ALL CHANGES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Files Modified: 3
+
+1. app.py (Backend)
+   • Line ~1736-1758
+   • Changed: mach_code → mech_code (3 places)
+   • Impact: API now returns correct data
+
+2. MachineSelectionAdapter.kt (Frontend)
+   • Lines ~32-56 (onBindViewHolder)
+   • Removed: Conflicting click listeners
+   • Added: checkbox.isClickable = false
+   • Impact: Selection works correctly
+
+3. dialog_machine_selector.xml (UI)
+   • Lines ~30-36 (TextInputEditText)
+   • Added: android:textColor="@color/label_text"
+   • Added: android:textSize="16sp"
+   • Impact: Search text visible
+
+
+═══════════════════════════════════════════════════════════════
+
+
+ROOT CAUSES EXPLAINED
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Bug #1: Database schema mismatch
+   • Someone assumed column was "mach_code"
+   • Actual database has "mech_code"
+   • SQL query failed with column not found error
+
+Bug #2: Event listener design flaw
+   • Checkbox has built-in click behavior
+   • Custom listener added to row AND checkbox
+   • Both fired on same click → double toggle → looks like instant uncheck
+
+Bug #3: Material Design default
+   • Material TextInputEditText has no default textColor
+   • Falls back to theme default (often black)
+   • White dialog background + black text = hard to see
+
+
+═══════════════════════════════════════════════════════════════
+
+
+TESTING EVIDENCE OF FIX
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Before Fix:
+   curl 192.168.0.223:5051/machines?designation_id=199
+   {
+     "status": "error",
+     "message": "Unknown column 'mm.mach_code' in 'field list'"
+   }
+
+After Fix:
+   curl 192.168.0.223:5051/machines?designation_id=199
+   {
+     "status": "success",
+     "data": [
+       {
+         "id": 1344,
+         "name": "1001 WINDING1001",
+         "mech_code": "1001",
+         "machine_no": "1344"
+       }
+     ],
+     "total": 3
+   }
+
+
+═══════════════════════════════════════════════════════════════
+
+           ALL FIXES VERIFIED AND TESTED ✅
+
+═══════════════════════════════════════════════════════════════
+

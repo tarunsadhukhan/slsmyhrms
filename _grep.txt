@@ -1,0 +1,2 @@
+385: 				   time(da.exit_time )	         as exit_time,
+459:                 'exit_time':        ('' if row.get('exit_time') in (None, '') else str(row['exit_time'])),

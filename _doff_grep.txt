@@ -1,0 +1,73 @@
+﻿5: mc_id, quality_id, trolly_id, gross_weight,
+8: - spinning_quality_mst (spg_quality_mst_id, spg_quality, ...)
+84: SELECT m.machine_id   AS mc_id,
+119: SELECT spg_quality_mst_id AS quality_id,
+120: concat(stm.spg_type_name,'-',spg_quality,' ',sqm.no_of_spindles,' Spindles'  )        AS quality_name
+121: FROM spinning_quality_mst sqm
+129: sql += " ORDER BY spg_quality"
+183: mc_id     = request.args.get('mc_id', type=int)
+192: d.mc_id,
+195: d.quality_id,
+196: q.spg_quality          AS quality_name,
+210: LEFT JOIN machine_mst          m  ON m.machine_id          = d.mc_id
+211: LEFT JOIN spinning_quality_mst q  ON q.spg_quality_mst_id  = d.quality_id
+222: if mc_id:
+223: sql += " AND d.mc_id = %s";     params.append(mc_id)
+257: """Return last quality_id and trolly_id used for a given machine in the
+260: mc_id = request.args.get('mc_id', type=int)
+261: if not mc_id:
+262: return jsonify({'status': 'error', 'message': 'mc_id required'}), 400
+267: SELECT d.quality_id, q.spg_quality AS quality_name,
+271: LEFT JOIN spinning_quality_mst q ON q.spg_quality_mst_id = d.quality_id
+273: WHERE d.mc_id = %s
+276: """, (mc_id,))
+300: mc_id        = data.get('mc_id')
+301: quality_id   = data.get('quality_id')
+307: #print ('Parsed doff transaction values:', doff_date, spell_id, mc_id, quality_id, trolly_id, gross_weight, tare_weight, net_weight)
+317: if not doff_date or not spell_id or not mc_id or not trolly_id or not branch_id:
+319: 'message': 'doff_date, spell_id, mc_id, trolly_id and branch_id are required'}), 400
+328: doff_date = %s, spell = %s, mc_id = %s, quality_id = %s,
+335: params = (doff_date, spell_id, mc_id, quality_id, trolly_id,
+345: (doff_date, spell, mc_id,  trolly_id,
+353: params = (doff_date, spell_id, mc_id, trolly_id,
+409: SELECT m.machine_id        AS mc_id,
+432: SELECT m.machine_id        AS mc_id,
+465: 'mc_id':               row.get('mc_id'),
+542: branch_id (optional), mc_id (optional, restricts to one machine).
+548: mc_id     = request.args.get('mc_id',     type=int)
+555: SELECT d.mc_id,
+561: LEFT JOIN machine_mst m ON m.machine_id = d.mc_id
+572: if mc_id:
+573: sql += ' AND d.mc_id = %s'
+574: params.append(mc_id)
+575: sql += ' GROUP BY d.mc_id, m.mech_code, m.machine_name ORDER BY m.mech_code'
+584: 'mc_id':      r['mc_id'],
+595: # -- FRAME ENTRY ENDPOINTS --
+597: # -- GET /doff/frame-machines -------------------------------------------------
+598: @doff_bp.route('/doff/frame-machines', methods=['GET'])
+599: def get_frame_machines():
+600: """List spinning-frame machines (machine_type_id = 36) for a branch."""
+609: SELECT mm.machine_id   AS mc_id,
+628: # -- GET /doff/frame-entries --------------------------------------------------
+629: @doff_bp.route('/doff/frame-entries', methods=['GET'])
+630: def get_frame_entries():
+631: """Return active frame mc_ids for a (date, spell, branch).
+647: mc_eb_id              AS mc_id
+648: FROM daily_doff_frames_winding
+660: 'mc_ids': [r['mc_id'] for r in rows],
+668: # -- POST /doff/frame-entries -------------------------------------------------
+669: @doff_bp.route('/doff/frame-entries', methods=['POST'])
+670: def save_frame_entries():
+671: """Bulk save: replace existing frame rows for (date, spell, branch).
+673: Body: {date, spell_id, branch_id, user_id, mc_ids: [int, ...]}
+675: then insert one row per mc_id with active=1, spg_wdg='S'.
+683: mc_ids    = data.get('mc_ids') or []
+687: if not isinstance(mc_ids, list):
+689: 'message': 'mc_ids must be an array'}), 400
+693: # Clear existing spinning frame rows for this date+spell+branch
+695: DELETE FROM daily_doff_frames_winding
+703: if mc_ids:
+705: INSERT INTO daily_doff_frames_winding
+709: for mc in mc_ids:
+714: print('frame insert err for mc', mc, ex)
+720: 'message': f'Saved {inserted} frame(s)',

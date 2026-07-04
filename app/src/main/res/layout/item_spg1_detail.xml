@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:padding="8dp"
+    android:layout_marginBottom="1dp"
+    android:background="#F5F5F5">
+
+    <TextView android:id="@+id/tvSeq"
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="1" android:textSize="12sp"
+        android:textColor="#555" android:gravity="center"/>
+
+    <TextView android:id="@+id/tvTrollyNo"
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="2" android:textSize="12sp"
+        android:textColor="#333" android:gravity="center"/>
+
+    <TextView android:id="@+id/tvGrossWt"
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="2" android:textSize="12sp"
+        android:textColor="#333" android:gravity="center"/>
+
+    <TextView android:id="@+id/tvTareWt"
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="2" android:textSize="12sp"
+        android:textColor="#333" android:gravity="center"/>
+
+    <TextView android:id="@+id/tvNetWt"
+        android:layout_width="0dp" android:layout_height="wrap_content"
+        android:layout_weight="2" android:textSize="12sp"
+        android:textColor="#1565C0" android:textStyle="bold" android:gravity="center"/>
+
+</LinearLayout>
+

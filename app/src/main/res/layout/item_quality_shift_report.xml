@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="10dp"
+    android:paddingBottom="10dp"
+    android:background="?android:attr/selectableItemBackground">
+
+    <TextView
+        android:id="@+id/tvQuality"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="2"
+        android:text="Quality"
+        android:textColor="#1E1E1E"
+        android:textSize="13sp"
+        android:gravity="start"
+        android:paddingEnd="4dp"/>
+
+    <TextView
+        android:id="@+id/tvShiftA"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="0.00"
+        android:textColor="#1E1E1E"
+        android:textSize="13sp"
+        android:gravity="end"
+        android:paddingEnd="4dp"/>
+
+    <TextView
+        android:id="@+id/tvShiftB"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="0.00"
+        android:textColor="#1E1E1E"
+        android:textSize="13sp"
+        android:gravity="end"
+        android:paddingEnd="4dp"/>
+
+    <TextView
+        android:id="@+id/tvShiftC"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="0.00"
+        android:textColor="#1E1E1E"
+        android:textSize="13sp"
+        android:gravity="end"
+        android:paddingEnd="4dp"/>
+
+    <TextView
+        android:id="@+id/tvTotal"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="0.00"
+        android:textColor="#1565C0"
+        android:textSize="13sp"
+        android:textStyle="bold"
+        android:gravity="end"/>
+
+</LinearLayout>
+

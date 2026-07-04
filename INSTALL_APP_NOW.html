@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MyHRMS - Install Machine Name Fix</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            font-size: 1.2em;
+            margin-bottom: 30px;
+            opacity: 0.9;
+        }
+        .method {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            border-left: 5px solid #4CAF50;
+        }
+        .method h2 {
+            margin-top: 0;
+            color: #4CAF50;
+        }
+        .method.recommended {
+            border-left-color: #FFD700;
+            background: rgba(255, 215, 0, 0.2);
+        }
+        .method.recommended h2 {
+            color: #FFD700;
+        }
+        .step {
+            margin: 10px 0;
+            padding-left: 25px;
+            position: relative;
+        }
+        .step:before {
+            content: "✓";
+            position: absolute;
+            left: 0;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+        .command {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 10px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            margin: 10px 0;
+            overflow-x: auto;
+        }
+        .important {
+            background: rgba(255, 87, 34, 0.3);
+            border-left: 5px solid #FF5722;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .success {
+            background: rgba(76, 175, 80, 0.3);
+            border-left: 5px solid #4CAF50;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .apk-location {
+            background: rgba(33, 150, 243, 0.3);
+            border: 2px dashed #2196F3;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        .btn-container {
+            text-align: center;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📱 MyHRMS Installation</h1>
+        <div class="subtitle">Machine Name Fix - Ready to Install!</div>
+
+        <div class="apk-location">
+            📍 APK File Location:<br>
+            E:\sjm\MyHrms\app\build\outputs\apk\debug\app-debug.apk
+        </div>
+
+        <div class="btn-container">
+            <button onclick="openApkFolder()">📂 Open APK Folder</button>
+            <button onclick="openInstaller()">🚀 Run Installer</button>
+        </div>
+
+        <div class="method recommended">
+            <h2>⭐ METHOD 1: Direct Transfer (EASIEST - No USB!)</h2>
+            <div class="step">Go to: E:\sjm\MyHrms\app\build\outputs\apk\debug\</div>
+            <div class="step">Find: app-debug.apk (around 8-10 MB)</div>
+            <div class="step">Send to your phone via WhatsApp, Email, or Bluetooth</div>
+            <div class="step">On your phone, tap the APK file</div>
+            <div class="step">Tap "Install" (allow unknown sources if needed)</div>
+            <div class="step">Done! Open the app and test</div>
+        </div>
+
+        <div class="method">
+            <h2>🔌 METHOD 2: USB + ADB</h2>
+            <div class="step">Connect your phone via USB</div>
+            <div class="step">Enable USB Debugging on phone</div>
+            <div class="step">Open PowerShell as Administrator</div>
+            <div class="step">Type: A (then press Enter to answer "Yes to All")</div>
+            <div class="step">Run these commands:</div>
+            <div class="command">cd E:\sjm\MyHrms<br>adb devices<br>adb install -r app\build\outputs\apk\debug\app-debug.apk</div>
+        </div>
+
+        <div class="method">
+            <h2>📂 METHOD 3: Double-Click Installer</h2>
+            <div class="step">Connect phone via USB with USB Debugging enabled</div>
+            <div class="step">Double-click: E:\sjm\MyHrms\install_apk.bat</div>
+            <div class="step">It will auto-install</div>
+        </div>
+
+        <div class="important">
+            <strong>⚠️ IMPORTANT: Backend Server Must Be Running!</strong><br><br>
+            Open PowerShell and run:
+            <div class="command">cd E:\sjm\MyHrms<br>python app.py</div>
+            Keep this window open while using the app!
+        </div>
+
+        <div class="success">
+            <strong>✅ After Installing, Test:</strong><br><br>
+            1. Open MyHRMS app<br>
+            2. Login<br>
+            3. Go to Mark Attendance<br>
+            4. Select Designation<br>
+            5. Tap "Machine Numbers"<br>
+            6. You should now see:<br>
+            <div style="margin-top: 10px; padding-left: 20px;">
+                ☑ H06 HESS HELPER LINE NO 6<br>
+                ☑ H07 HESS HELPER LINE NO 7<br>
+                ☑ H08 HESS HELPER LINE NO 8<br>
+                <strong>NOT "No name"!</strong>
+            </div>
+        </div>
+
+        <div class="important">
+            <strong>🐛 Still seeing "No name"?</strong><br><br>
+            1. Uninstall old MyHRMS app completely<br>
+            2. Restart your phone<br>
+            3. Install the NEW app-debug.apk<br>
+            4. Make sure backend is running (python app.py)<br>
+            5. Clear app data: Settings > Apps > MyHRMS > Clear Data
+        </div>
+
+        <div class="success" style="text-align: center; margin-top: 30px;">
+            <h2>🎉 Everything is Ready!</h2>
+            <p>Choose any method above and install the app.</p>
+            <p>The machine names will work correctly!</p>
+        </div>
+    </div>
+
+    <script>
+        function openApkFolder() {
+            alert('Opening APK folder...\n\nLook for "app-debug.apk" file.\nSend it to your phone to install.');
+            // This will be triggered by the file itself
+        }
+
+        function openInstaller() {
+            alert('To use the installer:\n\n1. Connect phone via USB\n2. Enable USB Debugging\n3. Double-click: install_apk.bat');
+        }
+    </script>
+</body>
+</html>
+
