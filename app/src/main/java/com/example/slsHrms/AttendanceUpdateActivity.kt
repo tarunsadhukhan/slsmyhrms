@@ -164,10 +164,10 @@ class AttendanceUpdateActivity : AppCompatActivity() {
 
         showLoading(true)
 
-        // Get selected shift name (if any)
+        // Get selected spell id (if any)
         val selectedShiftPos = binding.spinnerSearchShift.selectedItemPosition
-        val selectedShiftName = if (selectedShiftPos > 0) {
-            shifts[selectedShiftPos - 1].name
+        val selectedSpellId = if (selectedShiftPos > 0) {
+            shifts[selectedShiftPos - 1].id
         } else {
             null
         }
@@ -177,7 +177,7 @@ class AttendanceUpdateActivity : AppCompatActivity() {
             date = selectedDate,
             empCode = empCode.ifEmpty { null },
             empName = empName.ifEmpty { null },
-            shiftName = selectedShiftName,
+            spellId = selectedSpellId,
             branchId = selectedBranchId
         ).enqueue(object : Callback<AttendanceReportResponse> {
             override fun onResponse(

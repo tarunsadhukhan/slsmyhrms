@@ -37,6 +37,14 @@
         android:paddingStart="4dp" android:paddingEnd="2dp"
         android:ellipsize="end" android:maxLines="1" />
 
+    <TextView android:id="@+id/tvWorkingHours"
+        android:layout_width="64dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="11sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:paddingStart="2dp" android:paddingEnd="2dp"
+        android:ellipsize="end" android:maxLines="1" />
+
     <TextView android:id="@+id/tvDept"
         android:layout_width="110dp" android:layout_height="match_parent"
         android:gravity="center" android:textSize="10sp"
@@ -63,14 +71,6 @@
 
     <TextView android:id="@+id/tvAttType"
         android:layout_width="50dp" android:layout_height="match_parent"
-        android:gravity="center" android:textSize="11sp"
-        android:textColor="@color/label_text"
-        android:background="@drawable/table_cell_border"
-        android:paddingStart="2dp" android:paddingEnd="2dp"
-        android:ellipsize="end" android:maxLines="1" />
-
-    <TextView android:id="@+id/tvWorkingHours"
-        android:layout_width="64dp" android:layout_height="match_parent"
         android:gravity="center" android:textSize="11sp"
         android:textColor="@color/label_text"
         android:background="@drawable/table_cell_border"

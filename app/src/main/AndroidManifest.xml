@@ -99,6 +99,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".AttendanceViewActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".SpinningDoffActivity"
             android:exported="false" />
 

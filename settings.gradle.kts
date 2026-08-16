@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "VowHrms"
+rootProject.name = "AppHrms"
 include(":app")

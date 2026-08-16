@@ -87,6 +87,9 @@ interface ApiService {
     @POST(ApiRoutes.CHECK_FACE)
     fun checkFace(@Body request: FaceRecognitionRequest): Call<FaceRecognitionResponse>
 
+    @GET(ApiRoutes.EMPLOYEE_FACE)
+    fun getEmployeeFace(@Path("eb_id") ebId: Int): Call<EmployeeFaceResponse>
+
     @GET(ApiRoutes.EMPLOYEE_BY_CODE)
     fun getEmployeeByCode(
         @Path("emp_code") empCode: String,
@@ -169,7 +172,7 @@ interface ApiService {
         @Query("date") date: String,
         @Query("emp_code") empCode: String? = null,
         @Query("emp_name") empName: String? = null,
-        @Query("shift_name") shiftName: String? = null,
+        @Query("spell_id") spellId: Int? = null,
         @Query("branch_id") branchId: Int? = null
     ): Call<AttendanceReportResponse>
 
@@ -182,6 +185,7 @@ interface ApiService {
         @Query("emp_code") empCode: String? = null,
         @Query("branch_id") branchId: Int? = null,
         @Query("shift_name") shiftName: String? = null,
+        @Query("spell_id") spellId: Int? = null,
         @Query("designation_id") designationId: Int? = null
     ): Call<AttendanceReportResponse>
 

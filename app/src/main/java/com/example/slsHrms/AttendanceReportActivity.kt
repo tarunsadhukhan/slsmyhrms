@@ -277,8 +277,8 @@ class AttendanceReportActivity : AppCompatActivity() {
 
         // Get selected spell
         val spellPos = binding.spinnerSpell.selectedItemPosition
-        val shiftName = if (spellPos > 0 && shifts.size >= spellPos) {
-            shifts[spellPos - 1].name
+        val spellId = if (spellPos > 0 && shifts.size >= spellPos) {
+            shifts[spellPos - 1].id
         } else null
 
         // Get emp code filter
@@ -296,7 +296,7 @@ class AttendanceReportActivity : AppCompatActivity() {
             departmentId = departmentId,
             empCode = empCode,
             branchId = if (selectedBranchId > 0) selectedBranchId else null,
-            shiftName = shiftName
+            spellId = spellId
         ).enqueue(object : Callback<AttendanceReportResponse> {
             override fun onResponse(
                 call: Call<AttendanceReportResponse>,

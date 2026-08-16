@@ -75,7 +75,7 @@ class FaceValidateActivity : AppCompatActivity() {
     // Bound camera provider + the lens we are currently showing, so the
     // "Flip Camera" button can rebind between the front and back lenses.
     private var cameraProvider: ProcessCameraProvider? = null
-    private var lensFacing = CameraSelector.LENS_FACING_FRONT
+    private var lensFacing = CameraSelector.LENS_FACING_BACK
 
     // True from the instant a blink is confirmed until validation finishes,
     // so we only fire one capture/network round-trip at a time.

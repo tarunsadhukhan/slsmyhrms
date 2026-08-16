@@ -29,6 +29,11 @@ object ApiRoutes {
     const val DASHBOARD_CARD_TREND = "dashboard/card-trend"
     const val ATTENDANCE_DASHBOARD = "attendance-dashboard"
     const val ATTENDANCE_REPORT = "attendance-report"
+
+    // Registered face by eb_id. Deliberately not EMPLOYEE_BY_CODE: that one also
+    // runs last-worked department/machine lookups for the entry form's pre-fill,
+    // which measured ~1.3s of queries a read-only view has no use for.
+    const val EMPLOYEE_FACE = "employee-face/{eb_id}"
     const val EMP_WISE_ATTENDANCE = "emp-wise-attendance"
 
     const val STATUS_MST             = "status-mst"

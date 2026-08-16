@@ -256,7 +256,10 @@ class EmpWiseAttendanceActivity : AppCompatActivity() {
                 fixedAdapter.update(employees)
                 scrollableAdapter.update(employees, columns)
 
-                binding.tvTotalEmp.text  = "Employees: ${employees.size}"
+                // employees.size is now the ROW count (a person can span several
+                // dept/shift/designation/type lines, plus a subtotal). The real
+                // headcount comes from the response.
+                binding.tvTotalEmp.text  = "Employees: ${data.totalEmployees} · Rows: ${employees.size}"
                 binding.tvDateRange.text = "${data.fromDate} to ${data.toDate}"
                 binding.layoutSummary.visibility = View.VISIBLE
                 binding.layoutTable.visibility   = View.VISIBLE
@@ -280,6 +283,12 @@ class EmpWiseAttendanceActivity : AppCompatActivity() {
 
         for (col in columns) {
             binding.headerScrollable.addView(makeHeaderCell(col, colWidthPx))
+        }
+        // Per-type tallies then the grand total. Order and width come from the
+        // adapter so header and cells cannot drift apart.
+        val typeWidthPx = dpToPx(EmpAttScrollableAdapter.TYPE_WIDTH_DP)
+        for (t in EmpAttScrollableAdapter.TYPE_COLS) {
+            binding.headerScrollable.addView(makeHeaderCell(t, typeWidthPx))
         }
         binding.headerScrollable.addView(makeHeaderCell("Total", totWidthPx, Color.parseColor("#FFF176")))
     }

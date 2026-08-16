@@ -16,17 +16,17 @@ data class Machine(
     val machineNo: String? = null
 ) {
     /**
-     * Returns display text as "mech_code (machine_name)" or fallback to "No name"
+     * Returns display text as mech_code, falling back to machine name / ID
      */
     fun getDisplayName(): String {
         val code = mechCode?.trim() ?: ""
         val machineName = name?.trim() ?: ""
-        
+
         return when {
-            // If machine name exists and is not empty, use it (it may already contain code + name)
-            machineName.isNotEmpty() -> machineName
-            // Otherwise use just the code if available
+            // Show only the mech_code when available
             code.isNotEmpty() -> code
+            // Fallback to machine name if no code
+            machineName.isNotEmpty() -> machineName
             // Last resort - show ID if available
             id != null && id > 0 -> "Machine #$id"
             else -> "No name"

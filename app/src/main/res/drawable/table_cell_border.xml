@@ -1,6 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Grid line only, no fill. A solid #FFFFFF here used to paint over the row
+     background, so every per-row colour set via setBackgroundColor was invisible
+     — the attendance-type colours AND the alternating stripe. The row supplies
+     the colour; the cell supplies only the border. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android">
-    <solid android:color="#FFFFFF" />
+    <solid android:color="@android:color/transparent" />
     <stroke android:width="0.5dp" android:color="#BDBDBD" />
 </shape>
 

@@ -1,10 +1,16 @@
 package com.example.slsHrms
 
 import android.app.DatePickerDialog
+import android.graphics.Typeface
 import android.os.Bundle
+import android.view.Gravity
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import android.widget.AdapterView
 import android.widget.ArrayAdapter
+import android.widget.LinearLayout
+import android.widget.TextView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -62,6 +68,9 @@ class AttendanceChecklistActivity : AppCompatActivity() {
         loadDropdowns()
 
         binding.btnSearch.setOnClickListener { loadReport() }
+        binding.etEbNo.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_SEARCH) { loadReport(); true } else false
+        }
     }
 
     // ── Date Pickers ─────────────────────────────────────────────
@@ -87,7 +96,9 @@ class AttendanceChecklistActivity : AppCompatActivity() {
     // ── RecyclerView ─────────────────────────────────────────────
 
     private fun setupRecyclerView() {
-        adapter = AttendanceChecklistAdapter(emptyList())
+        adapter = AttendanceChecklistAdapter(emptyList()) {
+            AttendanceViewActivity.start(this, it, branchId)
+        }
         binding.rvChecklist.layoutManager = LinearLayoutManager(this)
         binding.rvChecklist.adapter       = adapter
         binding.rvChecklist.itemAnimator  = null
@@ -155,13 +166,18 @@ class AttendanceChecklistActivity : AppCompatActivity() {
     // ── Load Report ───────────────────────────────────────────────
 
     private fun loadReport() {
-        binding.progressBar.visibility   = View.VISIBLE
-        binding.hsvTable.visibility      = View.GONE
-        binding.layoutEmpty.visibility   = View.GONE
-        binding.layoutSummary.visibility = View.GONE
+        // Covers both entry points — the keyboard would otherwise sit over the results.
+        (getSystemService(INPUT_METHOD_SERVICE) as InputMethodManager)
+            .hideSoftInputFromWindow(binding.root.windowToken, 0)
 
-        val spellSel  = spells.getOrNull(binding.spSpell.selectedItemPosition)
-        val spellName = if ((spellSel?.id ?: 0) > 0) spellSel?.name else null
+        binding.progressBar.visibility        = View.VISIBLE
+        binding.hsvTable.visibility           = View.GONE
+        binding.layoutEmpty.visibility        = View.GONE
+        binding.layoutSummary.visibility      = View.GONE
+        binding.layoutDesigSummary.visibility = View.GONE
+
+        val spellSel = spells.getOrNull(binding.spSpell.selectedItemPosition)
+        val spellId  = if ((spellSel?.id ?: 0) > 0) spellSel?.id else null
 
         val deptSel = departments.getOrNull(binding.spDepartment.selectedItemPosition)
         selectedDeptId = if ((deptSel?.id ?: 0) > 0) deptSel?.id else null
@@ -169,12 +185,17 @@ class AttendanceChecklistActivity : AppCompatActivity() {
         val desigSel = designations.getOrNull(binding.spDesignation.selectedItemPosition)
         val desigId  = if ((desigSel?.id ?: 0) > 0) desigSel?.id else null
 
+        // Blank = no filter. The backend matches emp_code with LIKE %..%, so a
+        // partial EB No is a valid search.
+        val ebNo = binding.etEbNo.text.toString().trim().ifBlank { null }
+
         RetrofitClient.getApiService(this).getAttendanceReportRange(
             fromDate      = fromDateApi,
             toDate        = toDateApi,
             departmentId  = selectedDeptId,
+            empCode       = ebNo,
             branchId      = if (branchId > 0) branchId else null,
-            shiftName     = spellName,
+            spellId       = spellId,
             designationId = desigId
         ).enqueue(object : Callback<AttendanceReportResponse> {
             override fun onResponse(call: Call<AttendanceReportResponse>,
@@ -198,6 +219,7 @@ class AttendanceChecklistActivity : AppCompatActivity() {
                 binding.tvDateRange.text = "${binding.tvFromDate.text} to ${binding.tvToDate.text}"
                 binding.layoutSummary.visibility = View.VISIBLE
                 binding.hsvTable.visibility      = View.VISIBLE
+                showDesignationSummary(records)
             }
 
             override fun onFailure(call: Call<AttendanceReportResponse>, t: Throwable) {
@@ -208,4 +230,66 @@ class AttendanceChecklistActivity : AppCompatActivity() {
             }
         })
     }
+
+    // ── Designation-wise summary (No of Hands) ────────────────────
+    // hands = (working_hours - idle_hours) / spell_hours, bucketed R | O | C
+
+    private fun showDesignationSummary(records: List<AttendanceRecord>) {
+        val rowsBox = binding.llDesigRows
+        rowsBox.removeAllViews()
+
+        // Leave is not attendance: it contributes no hands, and the person must
+        // not show up in the head count either. Filtering here rather than in
+        // the loop keeps them out of the (n) counts and the TOTAL alike.
+        val worked = records.filter { (it.attType ?: "R").trim().uppercase() != "L" }
+
+        fun hands(r: AttendanceRecord): Double {
+            val sh = r.shiftHours ?: 0.0
+            if (sh <= 0.0) return 0.0
+            return ((r.workingHours ?: 0.0) - (r.idleHours ?: 0.0)) / sh
+        }
+
+        val types = listOf("R", "O", "C")
+        val grand = DoubleArray(3)
+        worked.groupBy { it.designationName?.trim().takeUnless { n -> n.isNullOrEmpty() } ?: "—" }
+            .toSortedMap()
+            .forEach { (desig, recs) ->
+                val v = DoubleArray(3)
+                recs.forEach { r ->
+                    val i = types.indexOf((r.attType ?: "R").trim().uppercase())
+                    if (i >= 0) v[i] += hands(r)
+                }
+                for (i in 0..2) grand[i] += v[i]
+                val empCount = recs.distinctBy { it.ebId ?: it.empCode }.size
+                rowsBox.addView(summaryRow("$desig ($empCount)", v, bold = false))
+            }
+        val totalEmp = worked.distinctBy { it.ebId ?: it.empCode }.size
+        rowsBox.addView(summaryRow("TOTAL ($totalEmp)", grand, bold = true))
+        binding.layoutDesigSummary.visibility = View.VISIBLE
+    }
+
+    private fun summaryRow(label: String, v: DoubleArray, bold: Boolean): LinearLayout {
+        val row = LinearLayout(this).apply {
+            orientation = LinearLayout.HORIZONTAL
+            layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT)
+            setPadding(dp(6), dp(5), dp(6), dp(5))
+            if (bold) setBackgroundColor(0xFFE3F2FD.toInt())
+        }
+        fun cell(text: String, weight: Float, alignEnd: Boolean) = TextView(this).apply {
+            layoutParams = LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, weight)
+            this.text = text
+            textSize = 11f
+            setTextColor(0xFF212121.toInt())
+            if (bold) setTypeface(typeface, Typeface.BOLD)
+            gravity = if (alignEnd) Gravity.END else Gravity.START
+        }
+        fun fmt(d: Double) = if (d == 0.0) "-" else String.format(Locale.US, "%.2f", d)
+        row.addView(cell(label, 2f, false))
+        v.forEach { row.addView(cell(fmt(it), 1f, true)) }
+        row.addView(cell(fmt(v.sum()), 1.2f, true))
+        return row
+    }
+
+    private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 }

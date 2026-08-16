@@ -256,7 +256,7 @@ class AttendanceReportAdapter(
             } catch (_: Exception) { /* fall through */ }
         }
         when (record.status) {
-            "Face" -> {
+            "Face", "F" -> {
                 holder.ivPhoto.setImageResource(R.drawable.ic_face)
                 holder.ivPhoto.setColorFilter(Color.parseColor("#2E7D32"))
             }

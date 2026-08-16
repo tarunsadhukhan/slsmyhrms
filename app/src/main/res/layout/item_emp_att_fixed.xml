@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Fixed left columns row item -->
+<!-- Fixed left columns row item.
+     Widths must match headerFixed in activity_emp_wise_attendance.xml.
+     Name and Dept are narrower than they were to make room for Shift and Type
+     without pushing the frozen pane over half the screen on a phone. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="wrap_content"
     android:layout_height="36dp"
@@ -14,7 +17,7 @@
         android:ellipsize="end" android:maxLines="1" />
 
     <TextView android:id="@+id/tvName"
-        android:layout_width="130dp" android:layout_height="match_parent"
+        android:layout_width="96dp" android:layout_height="match_parent"
         android:gravity="center_vertical" android:textSize="11sp"
         android:textColor="@color/label_text"
         android:background="@drawable/table_cell_border"
@@ -22,11 +25,24 @@
         android:ellipsize="end" android:maxLines="1" />
 
     <TextView android:id="@+id/tvDept"
-        android:layout_width="90dp" android:layout_height="match_parent"
+        android:layout_width="72dp" android:layout_height="match_parent"
         android:gravity="center" android:textSize="10sp"
         android:textColor="@color/hint_text"
         android:background="@drawable/table_cell_border"
         android:paddingStart="2dp" android:paddingEnd="2dp"
         android:ellipsize="end" android:maxLines="1" />
-</LinearLayout>
 
+    <TextView android:id="@+id/tvShift"
+        android:layout_width="34dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="10sp"
+        android:textColor="@color/hint_text"
+        android:background="@drawable/table_cell_border"
+        android:ellipsize="end" android:maxLines="1" />
+
+    <TextView android:id="@+id/tvType"
+        android:layout_width="34dp" android:layout_height="match_parent"
+        android:gravity="center" android:textSize="10sp"
+        android:textColor="@color/label_text"
+        android:background="@drawable/table_cell_border"
+        android:ellipsize="end" android:maxLines="1" />
+</LinearLayout>
