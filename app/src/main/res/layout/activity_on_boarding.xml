@@ -191,7 +191,7 @@
                         android:id="@+id/btnCapture"
                         android:layout_width="match_parent"
                         android:layout_height="48dp"
-                        android:text="📷  Open Camera"
+                        android:text="📷  Capture Face (live)"
                         android:backgroundTint="@color/toolbar_dark_blue"
                         android:textColor="@color/white"
                         android:layout_marginBottom="10dp" />

@@ -10,16 +10,14 @@
         android:id="@+id/previewView"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        app:scaleType="fillCenter" />
+        app:scaleType="fitCenter" />
 
-    <!-- Centered framing guide -->
-    <ImageView
-        android:layout_width="240dp"
-        android:layout_height="280dp"
-        android:layout_gravity="center"
-        android:src="@drawable/ic_face_scan"
-        android:alpha="0.25"
-        android:contentDescription="Align face" />
+    <!-- Green/amber brackets + name labels from the live recogniser -->
+    <com.example.slsHrms.face.FaceOverlayView
+        android:id="@+id/overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
+
 
     <!-- Status banner at top -->
     <TextView
@@ -30,18 +28,11 @@
         android:background="#99000000"
         android:gravity="center"
         android:padding="16dp"
-        android:text="Position your face and blink"
+        android:text="Scanning…"
         android:textColor="#FFFFFF"
         android:textSize="16sp"
         android:textStyle="bold" />
 
-    <!-- Progress indicator -->
-    <ProgressBar
-        android:id="@+id/progressBar"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:visibility="gone" />
 
     <!-- Bottom action bar: flip camera + cancel -->
     <LinearLayout
@@ -65,6 +56,19 @@
             android:textAllCaps="false"
             android:textColor="#FFFFFF"
             android:textSize="16sp" />
+
+        <!-- Match threshold + cooldown -->
+        <Button
+            android:id="@+id/btnSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="16dp"
+            android:background="#CC000000"
+            android:paddingStart="20dp"
+            android:paddingEnd="20dp"
+            android:text="⚙"
+            android:textColor="#FFFFFF"
+            android:textSize="18sp" />
 
         <!-- Close / cancel button -->
         <Button

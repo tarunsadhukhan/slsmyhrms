@@ -4,47 +4,38 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.os.Bundle
-import android.util.Log
-import android.view.View
+import android.widget.SeekBar
+import android.widget.TextView
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.camera.core.CameraSelector
-import androidx.camera.core.ExperimentalGetImage
-import androidx.camera.core.ImageAnalysis
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.ImageProxy
-import androidx.camera.core.Preview
-import androidx.camera.lifecycle.ProcessCameraProvider
 import androidx.core.content.ContextCompat
-import com.example.slsHrms.api.FaceRecognitionRequest
-import com.example.slsHrms.api.FaceRecognitionResponse
-import com.example.slsHrms.api.RetrofitClient
 import com.example.slsHrms.databinding.ActivityFaceValidateBinding
-import com.google.mlkit.vision.common.InputImage
-import com.google.mlkit.vision.face.FaceDetection
-import com.google.mlkit.vision.face.FaceDetectorOptions
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import com.example.slsHrms.face.FaceCamera
+import com.example.slsHrms.face.FacePrefs
+import com.example.slsHrms.face.FaceEngine
+import com.example.slsHrms.face.FaceFrameAnalyzer
+import com.example.slsHrms.face.FaceGallery
+import com.example.slsHrms.face.FaceOverlayView
+import com.example.slsHrms.sync.OfflinePhotoStore
+import com.google.mlkit.vision.face.Face
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicBoolean
-import android.util.Base64 as AndroidBase64
 
 /**
- * Live, hands-free face validation.
+ * Live, hands-free face recognition for attendance.
  *
- * Opens a CameraX preview, runs on-device ML Kit face detection on each frame,
- * and the moment a face appears it captures one frame, sends it to the existing
- * `/check-face` endpoint (matched against employee_face_mst on the configured
- * backend), and — on a match — returns the employee code + name to the caller
- * and closes itself. No shutter button required.
+ * Every camera frame: detect -> align -> MobileFaceNet embed -> cosine match
+ * against the branch's enrolled faces (FaceGallery, on this device). Recognised
+ * faces get a green bracket with the name and score, unknown ones an amber one.
+ * The moment the person in front is a confident match, the employee code + name
+ * are returned to the caller and this screen closes. No shutter, no server
+ * round-trip; the capture still travels with the record so the server can
+ * re-verify it with dlib.
  */
 class FaceValidateActivity : AppCompatActivity() {
 
@@ -53,59 +44,36 @@ class FaceValidateActivity : AppCompatActivity() {
         const val EXTRA_CO_ID = "CO_ID"
         const val EXTRA_EMP_CODE = "EMP_CODE"
         const val EXTRA_EMP_NAME = "EMP_NAME"
-        private const val TAG = "FACE_VALIDATE"
 
-        // Blink state machine: eyes open → closed → open again.
-        private const val STAGE_NEED_OPEN = 0
-        private const val STAGE_NEED_CLOSED = 1
-        private const val STAGE_NEED_REOPEN = 2
+        // Match results — the caller queues these with the attendance so the
+        // server can re-verify with dlib once the record is uploaded.
+        const val EXTRA_MATCHED_OFFLINE = "MATCHED_OFFLINE"
+        const val EXTRA_PHOTO_PATH = "PHOTO_PATH"
+        const val EXTRA_CONFIDENCE = "CONFIDENCE"
 
-        // Both eyes must be above this to count as "open", below the lower one
-        // to count as "closed". The gap avoids flicker around the threshold.
-        private const val EYE_OPEN_THRESHOLD = 0.6f
-        private const val EYE_CLOSED_THRESHOLD = 0.3f
+        // ponytail: two consecutive ACCEPT frames on the same person before we
+        // return — a single frame can flicker onto a look-alike.
+        private const val CONFIRM_FRAMES = 2
+        // Borderline (REVIEW) on the same person for this long -> ask the
+        // operator instead of scanning forever. ~1.5 s at analysis frame rate.
+        private const val REVIEW_FRAMES = 12
     }
 
     private lateinit var binding: ActivityFaceValidateBinding
-    private var branchId: Int = 0
+    private lateinit var executor: ExecutorService
+    private var analyzer: FaceFrameAnalyzer? = null
+    private var branchId = 0
 
-    private lateinit var cameraExecutor: ExecutorService
-    private var imageCapture: ImageCapture? = null
-
-    // Bound camera provider + the lens we are currently showing, so the
-    // "Flip Camera" button can rebind between the front and back lenses.
-    private var cameraProvider: ProcessCameraProvider? = null
-    private var lensFacing = CameraSelector.LENS_FACING_BACK
-
-    // True from the instant a blink is confirmed until validation finishes,
-    // so we only fire one capture/network round-trip at a time.
-    private val isProcessing = AtomicBoolean(false)
-
-    // ── Liveness (anti-spoof) blink gate ─────────────────────────
-    // Require a real blink (eyes open → closed → open) before we ever capture &
-    // validate, so a still photo — which can't blink — is rejected. Partial
-    // progress survives dropped frames: the camera briefly loses the face mid-
-    // blink and we must NOT throw the progress away when that happens. Touched
-    // from the analyzer thread and reset from the UI thread, hence the atomics.
-    private val blinkStage = java.util.concurrent.atomic.AtomicInteger(STAGE_NEED_OPEN)
-    @Volatile private var lastPrompt = ""
-
-    private val faceDetector by lazy {
-        val options = FaceDetectorOptions.Builder()
-            .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
-            // Classification gives us per-eye open probabilities for blink detection.
-            .setClassificationMode(FaceDetectorOptions.CLASSIFICATION_MODE_ALL)
-            .setMinFaceSize(0.2f)
-            .build()
-        FaceDetection.getClient(options)
-    }
+    // Set the instant we decide on a result, so later frames are ignored.
+    private val done = AtomicBoolean(false)
+    private var lastEbId = -1
+    private var acceptStreak = 0
+    private var reviewStreak = 0
 
     private val permissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { granted ->
-        if (granted) {
-            startCamera()
-        } else {
+        if (granted) startCamera() else {
             Toast.makeText(this, "Camera permission is required", Toast.LENGTH_SHORT).show()
             setResult(RESULT_CANCELED)
             finish()
@@ -116,20 +84,44 @@ class FaceValidateActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityFaceValidateBinding.inflate(layoutInflater)
         setContentView(binding.root)
+        // Shop-floor use: the screen must not dim/lock mid-scan.
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
         branchId = intent.getIntExtra(EXTRA_BRANCH_ID, 0)
-        cameraExecutor = Executors.newSingleThreadExecutor()
+        executor = Executors.newSingleThreadExecutor()
 
         binding.btnClose.setOnClickListener {
             setResult(RESULT_CANCELED)
             finish()
         }
+        binding.btnFlipCamera.setOnClickListener {
+            FacePrefs.setUseFront(this, !FacePrefs.useFront(this))
+            startCamera()
+        }
+        binding.btnSettings.setOnClickListener { showSettings() }
 
-        binding.btnFlipCamera.setOnClickListener { flipCamera() }
+        if (!FaceEngine.isAvailable(this)) {
+            Toast.makeText(this, "Face model missing on this build — use manual entry", Toast.LENGTH_LONG).show()
+            setResult(RESULT_CANCELED)
+            finish()
+            return
+        }
 
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA)
-            == PackageManager.PERMISSION_GRANTED
-        ) {
+        // Room count: off the UI thread. An empty gallery is not fatal — the
+        // operator can still see the camera, but nothing will ever match.
+        executor.execute {
+            val enrolled = FaceGallery.countFor(this, branchId)
+            runOnUiThread {
+                if (isFinishing) return@runOnUiThread
+                binding.tvStatus.text = if (enrolled == 0) {
+                    "No employee faces downloaded for this branch — open Sync Center, or enter the code manually"
+                } else {
+                    "Scanning…  ($enrolled enrolled faces)"
+                }
+            }
+        }
+
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) {
             startCamera()
         } else {
             permissionLauncher.launch(Manifest.permission.CAMERA)
@@ -137,284 +129,193 @@ class FaceValidateActivity : AppCompatActivity() {
     }
 
     private fun startCamera() {
-        val providerFuture = ProcessCameraProvider.getInstance(this)
-        providerFuture.addListener({
-            cameraProvider = providerFuture.get()
-            bindCamera()
-        }, ContextCompat.getMainExecutor(this))
-    }
-
-    /**
-     * (Re)bind the preview, capture and analysis use cases to the lens given by
-     * [lensFacing]. Called on first start and again whenever the user flips.
-     * If the requested lens isn't available we fall back to the other one.
-     */
-    private fun bindCamera() {
-        val provider = cameraProvider ?: return
-
-        val preview = Preview.Builder().build().also {
-            it.setSurfaceProvider(binding.previewView.surfaceProvider)
-        }
-
-        imageCapture = ImageCapture.Builder()
-            .setCaptureMode(ImageCapture.CAPTURE_MODE_MINIMIZE_LATENCY)
-            .build()
-
-        val analysis = ImageAnalysis.Builder()
-            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-            .build()
-            .also { it.setAnalyzer(cameraExecutor, FaceAnalyzer()) }
-
-        val selector = CameraSelector.Builder()
-            .requireLensFacing(lensFacing)
-            .build()
-
-        try {
-            provider.unbindAll()
-            provider.bindToLifecycle(this, selector, preview, imageCapture, analysis)
-        } catch (e: Exception) {
-            // The requested lens may not exist (e.g. a tablet with no front
-            // camera) — fall back to the opposite lens.
-            Log.w(TAG, "Lens $lensFacing bind failed, trying the other lens", e)
-            lensFacing = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
-                CameraSelector.LENS_FACING_BACK
-            } else {
-                CameraSelector.LENS_FACING_FRONT
-            }
-            val fallback = CameraSelector.Builder()
-                .requireLensFacing(lensFacing)
-                .build()
-            try {
-                provider.unbindAll()
-                provider.bindToLifecycle(this, fallback, preview, imageCapture, analysis)
-            } catch (e2: Exception) {
-                Log.e(TAG, "Camera bind failed", e2)
-                Toast.makeText(this, "Unable to open camera", Toast.LENGTH_SHORT).show()
+        val a = FaceFrameAnalyzer(::handleFrame).also { analyzer = it }
+        FaceCamera.start(
+            this, binding.previewView, executor, a, FacePrefs.useFront(this),
+            onBound = { front -> binding.overlay.mirrored = front },
+            onError = { msg ->
+                Toast.makeText(this, msg, Toast.LENGTH_LONG).show()
                 setResult(RESULT_CANCELED)
                 finish()
             }
-        }
+        )
     }
 
-    /** Toggle between the front and back lens, then rebind. */
-    private fun flipCamera() {
-        if (cameraProvider == null) return
-        lensFacing = if (lensFacing == CameraSelector.LENS_FACING_FRONT) {
-            CameraSelector.LENS_FACING_BACK
-        } else {
-            CameraSelector.LENS_FACING_FRONT
-        }
-        // Re-arm detection so a capture in flight doesn't carry over to the new lens.
-        isProcessing.set(false)
-        resetLiveness()
-        binding.progressBar.visibility = View.GONE
-        binding.tvStatus.text = "Position your face and blink"
-        bindCamera()
-    }
-
-    private inner class FaceAnalyzer : ImageAnalysis.Analyzer {
-        @ExperimentalGetImage
-        override fun analyze(imageProxy: ImageProxy) {
-            val mediaImage = imageProxy.image
-            if (mediaImage == null || isProcessing.get()) {
-                imageProxy.close()
-                return
-            }
-            val input = InputImage.fromMediaImage(
-                mediaImage, imageProxy.imageInfo.rotationDegrees
-            )
-            faceDetector.process(input)
-                .addOnSuccessListener { faces ->
-                    if (!isProcessing.get()) trackLiveness(faces.firstOrNull())
-                }
-                .addOnFailureListener { e -> Log.e(TAG, "Face detect failed", e) }
-                .addOnCompleteListener { imageProxy.close() }
-        }
-    }
-
-    /**
-     * Advance the blink state machine for the most prominent [face]:
-     * eyes open → closed → open. Partial progress is kept across frames where
-     * the face momentarily drops out (which happens naturally mid-blink). Once a
-     * full blink is seen we capture once. A still photo can't blink, so it never
-     * gets here.
-     */
-    private fun trackLiveness(face: com.google.mlkit.vision.face.Face?) {
-        // Dropped frame — keep whatever progress we have, just wait for the next.
-        if (face == null) return
-
-        val left = face.leftEyeOpenProbability
-        val right = face.rightEyeOpenProbability
-        // Probabilities are null when the model couldn't classify this frame; skip it.
-        if (left == null || right == null) return
-
-        val eyesOpen = left > EYE_OPEN_THRESHOLD && right > EYE_OPEN_THRESHOLD
-        val eyesClosed = left < EYE_CLOSED_THRESHOLD && right < EYE_CLOSED_THRESHOLD
-
-        when (blinkStage.get()) {
-            STAGE_NEED_OPEN -> if (eyesOpen) {
-                blinkStage.set(STAGE_NEED_CLOSED)
-                updatePrompt("Blink to confirm you're live")
-            }
-            STAGE_NEED_CLOSED -> if (eyesClosed) blinkStage.set(STAGE_NEED_REOPEN)
-            STAGE_NEED_REOPEN -> if (eyesOpen) {
-                // Full blink seen — confirm liveness and capture exactly once.
-                if (isProcessing.compareAndSet(false, true)) {
-                    runOnUiThread { onLivenessConfirmed() }
-                }
-            }
-        }
-    }
-
-    /** Update the status banner only when the text actually changes. */
-    private fun updatePrompt(text: String) {
-        if (text != lastPrompt) {
-            lastPrompt = text
-            runOnUiThread { binding.tvStatus.text = text }
-        }
-    }
-
-    private fun onLivenessConfirmed() {
-        binding.tvStatus.text = "Liveness confirmed — validating…"
-        binding.progressBar.visibility = View.VISIBLE
-        captureAndValidate()
-    }
-
-    /** Clear blink progress so the challenge starts fresh. */
-    private fun resetLiveness() {
-        blinkStage.set(STAGE_NEED_OPEN)
-        lastPrompt = ""
-    }
-
-    private fun captureAndValidate() {
-        val capture = imageCapture ?: run {
-            resetForRetry("Camera not ready")
+    /** Analysis thread, every frame. */
+    private fun handleFrame(frame: Bitmap, faces: List<Face>) {
+        if (done.get()) return
+        if (faces.isEmpty()) {
+            binding.overlay.clear()
+            lastEbId = -1; acceptStreak = 0; reviewStreak = 0
             return
         }
-        capture.takePicture(
-            cameraExecutor,
-            object : ImageCapture.OnImageCapturedCallback() {
-                override fun onCaptureSuccess(image: ImageProxy) {
-                    val b64 = try {
-                        imageProxyToResizedBase64(image)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "encode failed", e)
-                        null
-                    } finally {
-                        image.close()
-                    }
-                    runOnUiThread {
-                        if (b64 == null) resetForRetry("Could not read frame")
-                        else sendToBackend(b64)
-                    }
-                }
 
-                override fun onError(exc: ImageCaptureException) {
-                    Log.e(TAG, "capture error", exc)
-                    runOnUiThread { resetForRetry("Capture failed") }
-                }
+        // Every face gets a box; only the person in front (biggest face) can decide.
+        val largest = faces.maxByOrNull { it.boundingBox.width() * it.boundingBox.height() }
+        var decision: FaceGallery.Match? = null
+        val boxes = ArrayList<FaceOverlayView.Box>(faces.size)
+
+        for (face in faces) {
+            val box = face.boundingBox
+            if (!FaceEngine.isUsable(face, frame.width)) {
+                boxes.add(FaceOverlayView.Box(box, "Come closer", false))
+                continue
             }
-        )
+            val aligned = FaceEngine.align(frame, face)
+            val embedding = aligned?.let { FaceEngine.embed(this, it) }
+            if (embedding == null) {
+                boxes.add(FaceOverlayView.Box(box, "", false))
+                continue
+            }
+            val match = FaceGallery.match(this, branchId, embedding)
+            val score = match?.let { String.format("%.2f", it.similarity) }
+            boxes.add(
+                when (match?.verdict) {
+                    FaceGallery.Verdict.ACCEPT -> FaceOverlayView.Box(box, "${match.empName}  $score", true)
+                    FaceGallery.Verdict.REVIEW -> FaceOverlayView.Box(box, "${match.empName}?  $score", false)
+                    else -> FaceOverlayView.Box(box, "UNKNOWN", false)
+                }
+            )
+            if (face === largest) decision = match
+        }
+        binding.overlay.setResults(frame.width, frame.height, boxes)
+        decide(decision, frame)
     }
 
-    private fun sendToBackend(base64Image: String) {
-        val request = FaceRecognitionRequest(
-            image = base64Image,
-            branchId = if (branchId > 0) branchId else null
+    /** Streak logic for the face in front; fires the result exactly once. */
+    private fun decide(match: FaceGallery.Match?, frame: Bitmap) {
+        if (match != null) android.util.Log.d(
+            "FACE_MATCH", "%s %s sim=%.3f runnerUp=%.3f".format(match.verdict, match.empCode, match.similarity, match.runnerUp)
         )
-        RetrofitClient.getApiService(this).checkFace(request)
-            .enqueue(object : Callback<FaceRecognitionResponse> {
-                override fun onResponse(
-                    call: Call<FaceRecognitionResponse>,
-                    response: Response<FaceRecognitionResponse>
-                ) {
-                    binding.progressBar.visibility = View.GONE
-                    val result = response.body()
-                    if (response.isSuccessful && result != null && result.status == "success") {
-                        returnResult(result.empCode, result.empName)
-                    } else {
-                        resetForRetry(result?.message ?: "Face not recognized")
-                    }
+        if (match == null || match.verdict == FaceGallery.Verdict.REJECT) {
+            lastEbId = -1; acceptStreak = 0; reviewStreak = 0
+            return
+        }
+        if (match.ebId != lastEbId) {
+            lastEbId = match.ebId; acceptStreak = 0; reviewStreak = 0
+        }
+        if (match.verdict == FaceGallery.Verdict.ACCEPT) {
+            // Cooldown: this employee was punched from this device a moment ago.
+            val cooldown = FacePrefs.cooldownSec(this)
+            val since = FacePrefs.secondsSincePunch(match.empCode)
+            if (cooldown > 0 && since != null && since < cooldown) {
+                acceptStreak = 0
+                runOnUiThread {
+                    binding.tvStatus.text = "${match.empName} already marked ${since}s ago — wait ${cooldown - since}s"
                 }
-
-                override fun onFailure(call: Call<FaceRecognitionResponse>, t: Throwable) {
-                    binding.progressBar.visibility = View.GONE
-                    resetForRetry("Network error: ${t.localizedMessage}")
-                }
-            })
+                return
+            }
+            acceptStreak++; reviewStreak = 0
+            if (acceptStreak >= CONFIRM_FRAMES && done.compareAndSet(false, true)) {
+                analyzer?.paused = true
+                val photo = OfflinePhotoStore.write(this, toJpegBytes(frame))
+                runOnUiThread { returnResult(match, photo) }
+            }
+        } else {
+            reviewStreak++
+            if (reviewStreak >= REVIEW_FRAMES && done.compareAndSet(false, true)) {
+                analyzer?.paused = true
+                val photo = OfflinePhotoStore.write(this, toJpegBytes(frame))
+                runOnUiThread { confirmLowConfidence(match, photo) }
+            }
+        }
     }
 
-    private fun returnResult(empCode: String?, empName: String?) {
+    /** Borderline score: one tap from the operator instead of a silent guess. */
+    private fun confirmLowConfidence(match: FaceGallery.Match, photoPath: String?) {
+        if (isFinishing || isDestroyed) return
+        AlertDialog.Builder(this)
+            .setTitle("Confirm employee")
+            .setMessage(
+                "Matched with low confidence.\n\n" +
+                    "${match.empName} (${match.empCode})\n" +
+                    "Confidence: ${"%.1f".format(match.confidencePct)}%\n\n" +
+                    "Is this the right person?"
+            )
+            .setCancelable(false)
+            .setPositiveButton("Yes") { _, _ -> returnResult(match, photoPath) }
+            .setNegativeButton("No") { _, _ ->
+                OfflinePhotoStore.delete(photoPath)
+                lastEbId = -1; acceptStreak = 0; reviewStreak = 0
+                done.set(false)
+                analyzer?.paused = false
+            }
+            .show()
+    }
+
+    /** ⚙ — match threshold (0.40..1.00, overrides the server value) and punch cooldown. */
+    private fun showSettings() {
+        val view = layoutInflater.inflate(R.layout.dialog_face_settings, null)
+        val txtThreshold = view.findViewById<TextView>(R.id.txtThreshold)
+        val seekThreshold = view.findViewById<SeekBar>(R.id.seekThreshold)
+        val txtCooldown = view.findViewById<TextView>(R.id.txtCooldown)
+        val seekCooldown = view.findViewById<SeekBar>(R.id.seekCooldown)
+
+        val serverThreshold = FaceGallery.serverAcceptThreshold(this)
+        val current = FacePrefs.threshold(this) ?: serverThreshold
+        seekThreshold.max = 60                                   // 0.40 .. 1.00 in 0.01 steps
+        seekThreshold.progress = ((current - 0.40f) * 100).toInt().coerceIn(0, 60)
+        fun thresholdOf(p: Int) = 0.40f + p / 100f
+        fun showThreshold(v: Float) {
+            txtThreshold.text = "Match threshold: %.2f%s".format(v, if (v == serverThreshold) "  (server default)" else "")
+        }
+        showThreshold(thresholdOf(seekThreshold.progress))
+        seekThreshold.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(bar: SeekBar?, p: Int, fromUser: Boolean) = showThreshold(thresholdOf(p))
+            override fun onStartTrackingTouch(bar: SeekBar?) {}
+            override fun onStopTrackingTouch(bar: SeekBar?) {}
+        })
+
+        seekCooldown.max = 300
+        seekCooldown.progress = FacePrefs.cooldownSec(this)
+        fun showCooldown(sec: Int) { txtCooldown.text = "Cooldown: ${if (sec == 0) "off" else "$sec s"}" }
+        showCooldown(seekCooldown.progress)
+        seekCooldown.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
+            override fun onProgressChanged(bar: SeekBar?, p: Int, fromUser: Boolean) = showCooldown(p)
+            override fun onStartTrackingTouch(bar: SeekBar?) {}
+            override fun onStopTrackingTouch(bar: SeekBar?) {}
+        })
+
+        AlertDialog.Builder(this)
+            .setTitle("Face settings")
+            .setView(view)
+            .setPositiveButton("Save") { _, _ ->
+                val t = thresholdOf(seekThreshold.progress)
+                FacePrefs.setThreshold(this, if (t == serverThreshold) null else t)
+                FacePrefs.setCooldownSec(this, seekCooldown.progress)
+                Toast.makeText(this, "Saved", Toast.LENGTH_SHORT).show()
+            }
+            .setNeutralButton("Use server default") { _, _ ->
+                FacePrefs.setThreshold(this, null)
+                FacePrefs.setCooldownSec(this, FacePrefs.DEFAULT_COOLDOWN_SEC)
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+    }
+
+    private fun returnResult(match: FaceGallery.Match, photoPath: String?) {
         val data = Intent().apply {
-            putExtra(EXTRA_EMP_CODE, empCode ?: "")
-            putExtra(EXTRA_EMP_NAME, empName ?: "")
+            putExtra(EXTRA_EMP_CODE, match.empCode)
+            putExtra(EXTRA_EMP_NAME, match.empName)
+            // Matched by the on-device engine: the server re-runs dlib on the
+            // capture when the record arrives, so the match is auditable.
+            putExtra(EXTRA_MATCHED_OFFLINE, true)
+            putExtra(EXTRA_PHOTO_PATH, photoPath)
+            putExtra(EXTRA_CONFIDENCE, match.confidencePct)
         }
         setResult(RESULT_OK, data)
-        Toast.makeText(this, "Matched: ${empName ?: empCode}", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Matched: ${match.empName}", Toast.LENGTH_SHORT).show()
         finish()
     }
 
-    /** Show a message, then re-arm detection after a brief pause to avoid spamming. */
-    private fun resetForRetry(message: String) {
-        binding.progressBar.visibility = View.GONE
-        binding.tvStatus.text = "$message — try again"
-        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
-        binding.previewView.postDelayed({
-            if (!isFinishing) {
-                isProcessing.set(false)
-                // Require a fresh blink before the next capture.
-                resetLiveness()
-                binding.tvStatus.text = "Position your face and blink"
-            }
-        }, 1500)
-    }
-
-    /**
-     * Convert a captured JPEG [ImageProxy] to a rotation-corrected, downscaled
-     * (max 720 px) base64 JPEG — same wire format the rest of the app uses, so
-     * the round-trip and server-side encoding stay fast.
-     */
-    private fun imageProxyToResizedBase64(
-        image: ImageProxy, maxDim: Int = 720, quality: Int = 80
-    ): String {
-        val buffer = image.planes[0].buffer
-        val bytes = ByteArray(buffer.remaining())
-        buffer.get(bytes)
-
-        var bitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.size)
-            ?: throw IllegalStateException("Bitmap decode failed")
-
-        val scale = maxDim.toFloat() / maxOf(bitmap.width, bitmap.height)
-        if (scale < 1f) {
-            val scaled = Bitmap.createScaledBitmap(
-                bitmap,
-                (bitmap.width * scale).toInt(),
-                (bitmap.height * scale).toInt(),
-                true
-            )
-            if (scaled != bitmap) bitmap.recycle()
-            bitmap = scaled
-        }
-
-        val rotationDeg = image.imageInfo.rotationDegrees
-        if (rotationDeg != 0) {
-            val matrix = Matrix().apply { postRotate(rotationDeg.toFloat()) }
-            val rotated = Bitmap.createBitmap(
-                bitmap, 0, 0, bitmap.width, bitmap.height, matrix, true
-            )
-            if (rotated != bitmap) bitmap.recycle()
-            bitmap = rotated
-        }
-
+    private fun toJpegBytes(bitmap: Bitmap, quality: Int = 80): ByteArray {
         val baos = ByteArrayOutputStream()
         bitmap.compress(Bitmap.CompressFormat.JPEG, quality, baos)
-        bitmap.recycle()
-        return AndroidBase64.encodeToString(baos.toByteArray(), AndroidBase64.NO_WRAP)
+        return baos.toByteArray()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (::cameraExecutor.isInitialized) cameraExecutor.shutdown()
-        faceDetector.close()
+        if (::executor.isInitialized) executor.shutdown()
     }
 }

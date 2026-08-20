@@ -14,6 +14,8 @@ import com.example.slsHrms.api.LoginResponse
 import com.example.slsHrms.api.RetrofitClient
 import com.example.slsHrms.databinding.ActivityLoginBinding
 import com.example.slsHrms.permissions.PermissionManager
+import com.example.slsHrms.sync.Connectivity
+import com.example.slsHrms.sync.OfflineCredentials
 import retrofit2.Call
 import retrofit2.Callback
 import retrofit2.Response
@@ -118,6 +120,12 @@ class LoginActivity : AppCompatActivity() {
     }
 
     private fun performLogin(username: String, password: String) {
+        // Known-offline: go straight to the cached credential instead of making
+        // the operator wait out a connect timeout at a gate with no signal.
+        if (!Connectivity.isOnline(this) && OfflineCredentials.isAvailable(this)) {
+            tryOfflineLogin(username, password, "no network")
+            return
+        }
         sendLogin(username, password)
     }
 
@@ -140,6 +148,15 @@ class LoginActivity : AppCompatActivity() {
                             getSharedPreferences("LoginPrefs", MODE_PRIVATE)
                                 .edit().putInt("user_id", it).apply()
                         }
+
+                        // Remember this (server-verified) sign-in so the same
+                        // person can get in with no network later — a phone that
+                        // reboots at a gate must still reach the attendance
+                        // screen. Only a PBKDF2 hash is stored, never the password.
+                        OfflineCredentials.remember(
+                            this@LoginActivity, username, password, userId,
+                            loginResponse.user?.fullName, ApiConfig.getTenant(this@LoginActivity)
+                        )
 
                         Toast.makeText(
                             this@LoginActivity,
@@ -183,13 +200,62 @@ class LoginActivity : AppCompatActivity() {
 
             override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
                 showLoading(false)
-                Toast.makeText(
-                    this@LoginActivity,
-                    "Network error: ${t.localizedMessage}",
-                    Toast.LENGTH_LONG
-                ).show()
+                // Server unreachable — not "wrong password". Fall back to the
+                // credentials this device has already had verified.
+                tryOfflineLogin(username, password, t.localizedMessage)
             }
         })
+    }
+
+    /**
+     * Sign in against the credential cached from the last successful online
+     * login. This is the only way an operator can reach the attendance screen
+     * after a reboot at a gate with no signal.
+     */
+    private fun tryOfflineLogin(username: String, password: String, networkError: String?) {
+        val tenant = ApiConfig.getTenant(this)
+        when (val result = OfflineCredentials.verify(this, username, password, tenant)) {
+            is OfflineCredentials.Result.Ok -> {
+                val session = result.session
+                getSharedPreferences(PREFS_NAME, MODE_PRIVATE).edit()
+                    .putInt("user_id", session.userId)
+                    .apply()
+                saveUsername(session.username)
+                Toast.makeText(
+                    this,
+                    "Signed in offline as ${session.fullName}. " +
+                        "Attendance and onboarding will save on this device.",
+                    Toast.LENGTH_LONG
+                ).show()
+                val intent = Intent(this, DashboardActivity::class.java)
+                intent.putExtra("USER_NAME", session.fullName)
+                startActivity(intent)
+                finish()
+            }
+            is OfflineCredentials.Result.WrongPassword ->
+                Toast.makeText(this, "Wrong password (checked offline)", Toast.LENGTH_LONG).show()
+            is OfflineCredentials.Result.Expired ->
+                Toast.makeText(
+                    this,
+                    "Offline sign-in expired — last online login was ${result.days} days ago. " +
+                        "Connect to the server once to continue.",
+                    Toast.LENGTH_LONG
+                ).show()
+            is OfflineCredentials.Result.WrongTenant ->
+                Toast.makeText(
+                    this,
+                    "This device is configured for a different database. " +
+                        "Connect to the server to sign in.",
+                    Toast.LENGTH_LONG
+                ).show()
+            is OfflineCredentials.Result.NotEnrolled ->
+                Toast.makeText(
+                    this,
+                    "No network, and this user has not signed in on this device before.\n" +
+                        "(${networkError ?: "server unreachable"})",
+                    Toast.LENGTH_LONG
+                ).show()
+        }
     }
 
     private fun saveUsername(username: String) {

@@ -5,6 +5,7 @@ import retrofit2.Call
 import retrofit2.http.Body
 import retrofit2.http.DELETE
 import retrofit2.http.GET
+import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.PUT
 import retrofit2.http.Path
@@ -81,11 +82,35 @@ interface ApiService {
     @POST(ApiRoutes.ATTENDANCE)
     fun recognizeFace(@Body request: FaceRecognitionRequest): Call<FaceRecognitionResponse>
 
+    /**
+     * [offlinePhotoPath] is an app-private file path, not data: OfflineInterceptor
+     * strips the header before the request goes out and stores the path on the
+     * outbox row, so a queued punch carries its capture without ever putting a
+     * 200 KB base64 blob in the payload. Null (the normal case) is not sent.
+     */
     @POST(ApiRoutes.MARK_ATTENDANCE)
-    fun markAttendanceManual(@Body request: MarkAttendanceRequest): Call<FaceRecognitionResponse>
+    fun markAttendanceManual(
+        @Body request: MarkAttendanceRequest,
+        @Header("X-Offline-Photo") offlinePhotoPath: String? = null
+    ): Call<FaceRecognitionResponse>
 
     @POST(ApiRoutes.CHECK_FACE)
     fun checkFace(@Body request: FaceRecognitionRequest): Call<FaceRecognitionResponse>
+
+    // ── Offline-First Sync ────────────────────────────────────────
+    @GET(ApiRoutes.SYNC_TIME)
+    fun syncTime(): Call<SyncTimeResponse>
+
+    @GET(ApiRoutes.SYNC_FACE_EMBEDDINGS)
+    fun syncFaceEmbeddings(
+        @Query("branch_id") branchId: Int,
+        @Query("since") since: String? = null,
+        @Query("offset") offset: Int = 0,
+        @Query("limit") limit: Int = 200
+    ): Call<FaceEmbeddingResponse>
+
+    @GET(ApiRoutes.SYNC_REVIEW_COUNT)
+    fun syncReviewCount(@Query("branch_id") branchId: Int? = null): Call<ReviewCountResponse>
 
     @GET(ApiRoutes.EMPLOYEE_FACE)
     fun getEmployeeFace(@Path("eb_id") ebId: Int): Call<EmployeeFaceResponse>
@@ -103,8 +128,9 @@ interface ApiService {
     ): Call<LeaveStatusResponse>
 
     // ── Employees ────────────────────────────────────────────────
+    /** joined=1 -> only JOINED (HR status 35) employees — the ones attendance accepts. */
     @GET(ApiRoutes.EMPLOYEES)
-    fun getEmployees(): Call<EmployeeResponse>
+    fun getEmployees(@Query("joined") joined: Int? = null): Call<EmployeeResponse>
 
     @GET(ApiRoutes.EMPLOYEE_SEARCH)
     fun searchEmployees(

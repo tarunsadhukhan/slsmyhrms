@@ -42,5 +42,20 @@ data class MarkAttendanceRequest(
     // Device geo-location captured at submit time, "latitude,longitude".
     // Stored in daily_attendance.get_location. Empty string when no fix.
     @SerializedName("get_location")
-    val getLocation: String? = null
+    val getLocation: String? = null,
+
+    // ── Offline face match (Part B5) ──────────────────────────────
+    // Set when the identity came from the on-device matcher. The server re-runs
+    // dlib on the capture and records MATCH / MISMATCH / NO_FACE, so an offline
+    // match is auditable rather than final.
+    @SerializedName("matched_offline")
+    val matchedOffline: Boolean? = null,
+
+    @SerializedName("match_confidence")
+    val matchConfidence: Double? = null,
+
+    /** Only inlined when the record is submitted while online; the queued path
+     *  carries the image as an outbox attachment instead of in the payload. */
+    @SerializedName("face_image_b64")
+    val faceImageB64: String? = null
 )

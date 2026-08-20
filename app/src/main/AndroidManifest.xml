@@ -15,6 +15,7 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
 
     <application
+        android:name=".HrmsApp"
         android:usesCleartextTraffic="true"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
@@ -40,6 +41,10 @@
             android:exported="false" />
 
         <activity
+            android:name=".SyncCenterActivity"
+            android:exported="false" />
+
+        <activity
             android:name=".DashboardActivity"
             android:exported="false" />
 
@@ -55,6 +60,11 @@
         <activity
             android:name=".AttendanceActivity"
             android:exported="false" />
+
+        <activity
+            android:name=".FaceEnrollActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
 
         <activity
             android:name=".FaceValidateActivity"

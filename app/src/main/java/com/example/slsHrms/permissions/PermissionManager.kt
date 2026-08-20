@@ -32,6 +32,25 @@ object PermissionManager {
     private const val PREFS       = "MenuPermPrefs"
     private const val KEY_USER_ID = "user_id"
     private const val KEY_JSON    = "permissions_json"
+    private const val KEY_CHECKED = "checked_at"
+
+    // ── Offline staleness ladder (Part D, Tier 4) ─────────────────────────
+    // Permissions are the one cached thing where being stale is a *security*
+    // problem. But a mill phone that cannot open the attendance screen because
+    // it has not seen the server today is worse than a slightly stale grant, so
+    // the ladder fails toward "production continues, privileges shrink".
+    //   0-7 days   trust silently
+    //   7-14 days  trust, but say so
+    //   >14 days   restricted: attendance + granted entry screens still work,
+    //              master screens and every edit/delete are locked
+    private const val WARN_DAYS_DEFAULT = 7
+    private const val LOCK_DAYS_DEFAULT = 14
+    private const val DAY_MS = 24L * 60 * 60 * 1000
+
+    /** Screens that administer data rather than record production. */
+    private val MASTER_KEYS = setOf(
+        "menu_onboarding", "card_employees", "ic_masters", "ic_employee", "ic_face_register"
+    )
 
     private val gson = Gson()
 
@@ -63,6 +82,7 @@ object PermissionManager {
                             .edit()
                             .putInt(KEY_USER_ID, userId)
                             .putString(KEY_JSON, gson.toJson(list))
+                            .putLong(KEY_CHECKED, System.currentTimeMillis())
                             .apply()
                         onDone?.invoke(true)
                     } else {
@@ -76,17 +96,37 @@ object PermissionManager {
     }
 
     /** Re-hydrate cache from disk. Call once from Application.onCreate or
-     *  lazily from the first `can*` call. */
+     *  lazily from the first `can*` call.
+     *
+     *  The cached set is only used for the user it was fetched for. Without that
+     *  check a second operator signing in on the same device — offline, so the
+     *  refresh cannot run — would silently inherit the previous user's menus.
+     */
     fun loadFromCacheIfNeeded(ctx: Context) {
         if (cache.isNotEmpty()) return
-        val json = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
-            .getString(KEY_JSON, null) ?: return
+        val prefs = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+        val cachedFor = prefs.getInt(KEY_USER_ID, 0)
+        val currentUser = ctx.getSharedPreferences("LoginPrefs", Context.MODE_PRIVATE)
+            .getInt("user_id", 0)
+        if (cachedFor == 0 || currentUser == 0 || cachedFor != currentUser) return
+        val json = prefs.getString(KEY_JSON, null) ?: return
         val type = object : TypeToken<List<MenuPermission>>() {}.type
         val list: List<MenuPermission> = gson.fromJson(json, type) ?: emptyList()
         cache = list.associateBy { it.menuKey }
     }
 
+    /**
+     * End the session but KEEP the cached grant on disk, so the same user can
+     * sign in offline afterwards and still see their menus. Anyone else is
+     * locked out of it by the user-id check in [loadFromCacheIfNeeded], and the
+     * staleness ladder still shrinks privileges over time.
+     */
     fun clear(ctx: Context) {
+        cache = emptyMap()
+    }
+
+    /** Wipe the grant entirely — for a real account switch, not a logout. */
+    fun forget(ctx: Context) {
         cache = emptyMap()
         ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().clear().apply()
     }
@@ -105,10 +145,62 @@ object PermissionManager {
         return cache.values.sortedBy { it.menuOrder }
     }
 
-    fun canView  (ctx: Context, key: String) = get(ctx, key)?.view   == true
-    fun canAdd   (ctx: Context, key: String) = get(ctx, key)?.add    == true
-    fun canModify(ctx: Context, key: String) = get(ctx, key)?.modify == true
-    fun canDelete(ctx: Context, key: String) = get(ctx, key)?.delete == true
+    // ── Staleness ladder ─────────────────────────────────────────────────
+
+    /** Days since the permission set was last confirmed with the server. */
+    fun staleDays(ctx: Context): Int {
+        val checked = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .getLong(KEY_CHECKED, 0L)
+        if (checked <= 0L) return 0   // never pulled = fresh login flow, not stale
+        return ((System.currentTimeMillis() - checked) / DAY_MS).toInt()
+    }
+
+    private fun warnDays(ctx: Context) =
+        com.example.slsHrms.sync.SyncEngine.config(ctx, "perm_stale_warn_days", WARN_DAYS_DEFAULT)
+
+    private fun lockDays(ctx: Context) =
+        com.example.slsHrms.sync.SyncEngine.config(ctx, "perm_stale_lock_days", LOCK_DAYS_DEFAULT)
+
+    fun isRestricted(ctx: Context): Boolean = staleDays(ctx) > lockDays(ctx)
+
+    /** Banner text for the dashboard, or null when the cache is fresh enough. */
+    fun stalenessNotice(ctx: Context): String? {
+        val days = staleDays(ctx)
+        return when {
+            days > lockDays(ctx) ->
+                "Restricted mode — permissions last checked $days days ago. " +
+                    "Attendance and entries still work; master screens and edits are locked."
+            days > warnDays(ctx) ->
+                "Permissions last checked $days days ago — connect to refresh."
+            else -> null
+        }
+    }
+
+    /** Force a re-pull now; called on any 403 and on role changes. */
+    fun invalidate(ctx: Context) {
+        ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
+            .edit().putLong(KEY_CHECKED, 0L).apply()
+    }
+
+    fun canView(ctx: Context, key: String): Boolean {
+        if (get(ctx, key)?.view != true) return false
+        // Restricted: production screens stay open, administration does not.
+        return !(isRestricted(ctx) && key in MASTER_KEYS)
+    }
+
+    fun canAdd(ctx: Context, key: String): Boolean {
+        if (get(ctx, key)?.add != true) return false
+        return !(isRestricted(ctx) && key in MASTER_KEYS)
+    }
+
+    // Editing and deleting are never allowed on a stale grant — an entry can be
+    // re-recorded, but a wrongly-permitted edit rewrites history.
+    fun canModify(ctx: Context, key: String) =
+        get(ctx, key)?.modify == true && !isRestricted(ctx)
+
+    fun canDelete(ctx: Context, key: String) =
+        get(ctx, key)?.delete == true && !isRestricted(ctx)
+
     fun canPrint (ctx: Context, key: String) = get(ctx, key)?.print  == true
 
     fun can(ctx: Context, key: String, action: PermissionAction): Boolean = when (action) {

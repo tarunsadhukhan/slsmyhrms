@@ -154,6 +154,12 @@ object ApiRoutes {
     const val ONBOARDING_REGISTER   = "onboarding/register-face"
     const val ONBOARDING_REGISTER_FACE = "onboarding/register-face"  // Alias
 
+    // ── Offline-First Sync ────────────────────────────────────────────────────
+    const val SYNC_TIME            = "sync/time"
+    const val SYNC_CONFIG          = "sync/config"
+    const val SYNC_FACE_EMBEDDINGS = "sync/face-embeddings"
+    const val SYNC_REVIEW_COUNT    = "sync/review-count"
+
     // ── Dynamic Menu & Permissions ────────────────────────────────────────────
     const val MENU_PERMISSIONS         = "menu-permissions"
     const val MENUS_MASTER             = "menus"

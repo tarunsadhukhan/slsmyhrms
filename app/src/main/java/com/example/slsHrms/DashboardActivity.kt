@@ -25,6 +25,7 @@ import com.example.slsHrms.api.Shift
 import com.example.slsHrms.api.ShiftResponse
 import com.example.slsHrms.databinding.ActivityDashboardBinding
 import com.example.slsHrms.permissions.PermissionManager
+import com.example.slsHrms.sync.SyncEngine
 import com.github.mikephil.charting.charts.BarChart
 import com.github.mikephil.charting.components.XAxis
 import com.github.mikephil.charting.data.BarData
@@ -98,6 +99,43 @@ class DashboardActivity : AppCompatActivity() {
         if (selectedBranchId > 0) {
             loadDashboardStats()
         }
+        showOfflineReadiness()
+    }
+
+    /**
+     * Two things the operator has to know before walking away from Wi-Fi:
+     * whether the permission cache has gone stale, and whether this branch's
+     * employee data has been downloaded at all (the first-run gate — offline
+     * face matching cannot work without it).
+     */
+    private fun showOfflineReadiness() {
+        PermissionManager.stalenessNotice(this)?.let {
+            Toast.makeText(this, it, Toast.LENGTH_LONG).show()
+        }
+        SyncEngine.outdatedBuild(this)?.let { required ->
+            Toast.makeText(
+                this,
+                "This app build is out of date — update to $required or newer. " +
+                    "Old builds can fill the sync queue with rejected records.",
+                Toast.LENGTH_LONG
+            ).show()
+        }
+        if (selectedBranchId <= 0) return
+        kotlin.concurrent.thread {
+            val faces = com.example.slsHrms.face.FaceGallery.countFor(this, selectedBranchId)
+            if (faces > 0) return@thread
+            // "0 faces" has four different causes needing four different people
+            // to act; SyncEngine works out which one and names the actual fix.
+            // Nag only when the operator can do something about it — telling a
+            // shop floor about a server backfill every time they open the app is
+            // noise they cannot act on.
+            val readiness = SyncEngine.faceReadiness(this, faces)
+            if (readiness == SyncEngine.FaceReadiness.NEEDS_BACKFILL ||
+                readiness == SyncEngine.FaceReadiness.SERVER_NOT_UPDATED
+            ) return@thread
+            val message = SyncEngine.faceReadinessMessage(this, faces, selectedBranchId)
+            runOnUiThread { Toast.makeText(this, message, Toast.LENGTH_LONG).show() }
+        }
     }
 
     // ── Welcome Section ──────────────────────────────────────────
@@ -121,6 +159,9 @@ class DashboardActivity : AppCompatActivity() {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val company = companyAdapter.getItem(position)
                 selectedCompanyId = company?.id ?: 0
+                // The download needs this to warm the same department URL the
+                // attendance screen asks for (?co_id=..&branch_id=..).
+                ActiveBranch.setCompany(this@DashboardActivity, selectedCompanyId)
                 updateCompanyLogo(company?.logo)
                 // Clear the branch dropdown immediately, then repopulate for the
                 // selected company (scoped to co_id + user_id).
@@ -143,6 +184,9 @@ class DashboardActivity : AppCompatActivity() {
         binding.spBranch.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 selectedBranchId = branchAdapter.getItem(position)?.id ?: 0
+                // Tell the sync layer which branch we are working in — it decides
+                // which face gallery and which masters to keep downloaded.
+                ActiveBranch.set(this@DashboardActivity, selectedBranchId)
                 // Clear the spell dropdown immediately, then repopulate for the branch.
                 setSpellList(emptyList())
                 if (selectedBranchId > 0) {
@@ -276,6 +320,12 @@ class DashboardActivity : AppCompatActivity() {
         companyAdapter.clear()
         companyAdapter.addAll(finalList)
         companyAdapter.notifyDataSetChanged()
+        // Capture the company here as well as in the spinner listener:
+        // notifyDataSetChanged does not re-fire onItemSelected, so repopulating
+        // the adapter would otherwise leave the stored company at 0 — and the
+        // download would warm the wrong departments URL. setBranchList below
+        // takes the same belt-and-braces approach for the branch.
+        ActiveBranch.setCompany(this, finalList.firstOrNull()?.id ?: 0)
     }
 
     private fun setBranchList(branches: List<BranchData>) {
@@ -287,6 +337,7 @@ class DashboardActivity : AppCompatActivity() {
         val newBranchId = finalList.firstOrNull()?.id ?: 0
         val branchChanged = newBranchId != selectedBranchId
         selectedBranchId = newBranchId
+        ActiveBranch.set(this, selectedBranchId)
         if (selectedBranchId > 0) {
             loadSpells(selectedBranchId)
         } else {
@@ -399,12 +450,46 @@ class DashboardActivity : AppCompatActivity() {
 
     private fun setupLogout() {
         binding.btnLogout.setOnClickListener {
-            PermissionManager.clear(this)
-            val intent = Intent(this, LoginActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            startActivity(intent)
-            finish()
+            // Un-uploaded records live in app-private storage. Logging out (and
+            // worse, clearing app data afterwards) would destroy work someone
+            // actually did, so it is blocked until the queue drains.
+            kotlin.concurrent.thread {
+                val pending = runCatching { SyncEngine.pendingCount(this) }.getOrDefault(0) +
+                    runCatching { SyncEngine.failedCount(this) }.getOrDefault(0)
+                runOnUiThread {
+                    if (pending > 0) {
+                        androidx.appcompat.app.AlertDialog.Builder(this)
+                            .setTitle("$pending record(s) not uploaded")
+                            .setMessage(
+                                "These entries only exist on this device. Sync them " +
+                                    "before logging out — do not clear app data until " +
+                                    "the Sync Center reads zero."
+                            )
+                            .setPositiveButton("Open Sync Center") { _, _ ->
+                                startActivity(Intent(this, SyncCenterActivity::class.java))
+                            }
+                            .setNegativeButton("Cancel", null)
+                            .show()
+                    } else {
+                        doLogout()
+                    }
+                }
+            }
         }
+    }
+
+    private fun doLogout() {
+        PermissionManager.clear(this)
+        // Face embeddings are biometric data — they do not outlive the session.
+        // The outbox is intentionally not touched (it is empty at this point).
+        com.example.slsHrms.local.HrmsDatabase.wipeCaches(this)
+        com.example.slsHrms.face.FaceGallery.invalidate()
+        com.example.slsHrms.sync.OfflineEmployees.invalidate()
+        RetrofitClient.clearCache(this)
+        val intent = Intent(this, LoginActivity::class.java)
+        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+        startActivity(intent)
+        finish()
     }
 
     // ── Card Click Handlers ──────────────────────────────────────

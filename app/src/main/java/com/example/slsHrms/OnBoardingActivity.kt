@@ -2,19 +2,14 @@ package com.example.slsHrms
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
-import androidx.core.content.FileProvider
-import android.graphics.Bitmap
+import android.content.Intent
 import android.graphics.BitmapFactory
-import android.graphics.Matrix
-import android.media.ExifInterface
-import java.io.ByteArrayOutputStream
 import com.example.slsHrms.api.OnBoardingRegisterRequest
 import com.example.slsHrms.api.OnBoardingRegisterResponse
 import com.example.slsHrms.api.OnBoardingEmployeeResponse
@@ -31,31 +26,36 @@ class OnBoardingActivity : AppCompatActivity() {
     private var currentEmpCode: String = ""
     private var currentEbId: Int = 0
     private var branchId: Int = 0
-    private var photoFile: File? = null
-    private var photoUri: Uri? = null
     private var capturedBase64: String? = null
+    // MobileFaceNet template averaged over the live samples FaceEnrollActivity
+    // took — sent as embedding_mobile so the worker is matchable offline at once.
+    private var capturedTemplate: FloatArray? = null
 
-    // ── Camera launcher ──────────────────────────────────────────
-    private val cameraLauncher = registerForActivityResult(
-        ActivityResultContracts.TakePicture()
-    ) { success ->
-        if (success && photoFile != null) {
-            // Some phones (e.g. Samsung Galaxy M05/M01) save the JPEG in the sensor's
-            // native landscape orientation and record the rotation only in the EXIF
-            // Orientation tag. BitmapFactory ignores that tag, so the captured portrait
-            // photo would display sideways. Apply the EXIF rotation up front so both the
-            // preview and the image sent to the backend are upright.
-            val bmp = decodeOrientedBitmap(photoFile!!)
-            // Re-encode the corrected bitmap so the backend receives the upright image too.
-            val out = ByteArrayOutputStream()
-            bmp.compress(Bitmap.CompressFormat.JPEG, 90, out)
-            capturedBase64 = android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP)
-            // Show preview
-            binding.ivFacePreview.setImageBitmap(bmp)
-            binding.ivFacePreview.visibility = View.VISIBLE
-            binding.btnRegisterFace.isEnabled = true
-        } else {
-            Toast.makeText(this, "Photo capture cancelled", Toast.LENGTH_SHORT).show()
+    companion object {
+        /** Must match MOBILE_MODEL_VER in src/sync/routes.py (v2 = landmark crop). */
+        const val MOBILE_MODEL_VER = "mobilefacenet-v2"
+    }
+
+    // ── Live enrolment launcher ──────────────────────────────────
+    // FaceEnrollActivity takes 5 live samples, averages them into one template
+    // and hands back that template plus the best frame as a JPEG.
+    private val enrollLauncher = registerForActivityResult(
+        ActivityResultContracts.StartActivityForResult()
+    ) { result ->
+        val data = result.data
+        val path = data?.getStringExtra(FaceEnrollActivity.EXTRA_PHOTO_PATH)
+        val bmp = path?.let { BitmapFactory.decodeFile(it) }
+        if (result.resultCode != RESULT_OK || path == null || bmp == null) {
+            Toast.makeText(this, "Face capture cancelled", Toast.LENGTH_SHORT).show()
+            return@registerForActivityResult
+        }
+        capturedBase64 = android.util.Base64.encodeToString(File(path).readBytes(), android.util.Base64.NO_WRAP)
+        capturedTemplate = data.getFloatArrayExtra(FaceEnrollActivity.EXTRA_TEMPLATE)
+        binding.ivFacePreview.setImageBitmap(bmp)
+        binding.ivFacePreview.visibility = View.VISIBLE
+        binding.btnRegisterFace.isEnabled = true
+        data.getStringExtra(FaceEnrollActivity.EXTRA_DUPLICATE_OF)?.let { other ->
+            Toast.makeText(this, "Note: this face already matches $other", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -103,6 +103,7 @@ class OnBoardingActivity : AppCompatActivity() {
         binding.cardEmployee.visibility = View.GONE
         binding.cardCamera.visibility = View.GONE
         capturedBase64 = null
+        capturedTemplate = null
         binding.btnRegisterFace.isEnabled = false
 
         RetrofitClient.getApiService(this).getOnBoardingEmployee(empCode, if (branchId > 0) branchId else null)
@@ -118,16 +119,67 @@ class OnBoardingActivity : AppCompatActivity() {
                         binding.tvDeptDesig.text = "${emp.departmentName ?: "-"} | ${emp.designationName ?: "-"}"
                         updateFaceCount(emp.faceCount ?: 0, emp.canRegister ?: false)
                         binding.cardEmployee.visibility = View.VISIBLE
+                    } else if (response.code() == 504) {
+                        // OkHttp's "unsatisfiable cache request" — we are offline
+                        // with nothing cached for this code, not "no such employee".
+                        allowOfflineEnrolment(empCode)
                     } else {
-                        val msg = response.body()?.message ?: "Employee not found"
+                        // 4xx bodies live in errorBody() — e.g. the server's
+                        // "… is in HR status OPEN — must be JOINED before face enrolment".
+                        val msg = response.body()?.message
+                            ?: response.errorBody()?.string()?.let { extractErrorMessage(it) }
+                            ?: "Employee not found"
                         Toast.makeText(this@OnBoardingActivity, msg, Toast.LENGTH_LONG).show()
                     }
                 }
                 override fun onFailure(call: Call<OnBoardingEmployeeResponse>, t: Throwable) {
                     binding.progressBar.visibility = View.GONE
-                    Toast.makeText(this@OnBoardingActivity, "Network error: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
+                    allowOfflineEnrolment(empCode)
                 }
             })
+    }
+
+    /**
+     * Enrol with no server. The employee's existence and the 3-face limit can
+     * only be checked by the backend, so both are enforced when the queued
+     * record uploads: an invalid enrolment comes back as a CONFLICT row in the
+     * Sync Center rather than being silently accepted or silently lost.
+     */
+    private fun allowOfflineEnrolment(empCode: String) {
+        binding.progressBar.visibility = View.GONE
+        currentEmpCode = empCode
+        currentEbId = 0
+
+        binding.tvEmpName.text = "(offline — looking up…)"
+        binding.tvEmpCode.text = "Code: $empCode"
+
+        // Both lookups hit disk (Room, then the cached /employees response), so
+        // neither can run on the UI thread — the previous version called the
+        // gallery here and swallowed the resulting exception, which is why this
+        // always read "name not available".
+        kotlin.concurrent.thread {
+            val known = kotlin.runCatching {
+                com.example.slsHrms.face.FaceGallery.lookupByCode(this, branchId, empCode)
+            }.getOrNull()
+            val name = known?.second
+                ?: com.example.slsHrms.sync.OfflineEmployees.nameFor(this, empCode)
+            runOnUiThread {
+                if (isFinishing) return@runOnUiThread
+                binding.tvEmpName.text = name ?: "(offline — name not available)"
+            }
+        }
+        binding.tvDeptDesig.text = "Offline — will be verified on upload"
+        binding.cardEmployee.visibility = View.VISIBLE
+        // Face count is unknown offline; allow the capture and let the server
+        // reject a 4th face at upload time.
+        updateFaceCount(0, true)
+        binding.tvFaceCount.text = "Faces Registered: unknown (offline)"
+        Toast.makeText(
+            this,
+            "Offline — the enrolment is saved on this device and checked by the " +
+                "server when it uploads.",
+            Toast.LENGTH_LONG
+        ).show()
     }
 
     private fun updateFaceCount(count: Int, canRegister: Boolean) {
@@ -161,38 +213,11 @@ class OnBoardingActivity : AppCompatActivity() {
     }
 
     private fun openCamera() {
-        val dir = File(filesDir, "face_photos").also { it.mkdirs() }
-        photoFile = File(dir, "face_${System.currentTimeMillis()}.jpg")
-        photoUri = FileProvider.getUriForFile(this, "${packageName}.fileprovider", photoFile!!)
-        cameraLauncher.launch(photoUri)
-    }
-
-    /**
-     * Decodes [file] into a Bitmap and rotates/flips it to match the EXIF Orientation tag,
-     * so images captured on phones that only set the EXIF tag (e.g. Samsung Galaxy M05/M01)
-     * are upright instead of sideways.
-     */
-    private fun decodeOrientedBitmap(file: File): Bitmap {
-        val bmp = BitmapFactory.decodeFile(file.absolutePath)
-        val orientation = try {
-            ExifInterface(file.absolutePath)
-                .getAttributeInt(ExifInterface.TAG_ORIENTATION, ExifInterface.ORIENTATION_NORMAL)
-        } catch (e: Exception) {
-            ExifInterface.ORIENTATION_NORMAL
-        }
-
-        val matrix = Matrix()
-        when (orientation) {
-            ExifInterface.ORIENTATION_ROTATE_90 -> matrix.postRotate(90f)
-            ExifInterface.ORIENTATION_ROTATE_180 -> matrix.postRotate(180f)
-            ExifInterface.ORIENTATION_ROTATE_270 -> matrix.postRotate(270f)
-            ExifInterface.ORIENTATION_FLIP_HORIZONTAL -> matrix.postScale(-1f, 1f)
-            ExifInterface.ORIENTATION_FLIP_VERTICAL -> matrix.postScale(1f, -1f)
-            ExifInterface.ORIENTATION_TRANSPOSE -> { matrix.postRotate(90f); matrix.postScale(-1f, 1f) }
-            ExifInterface.ORIENTATION_TRANSVERSE -> { matrix.postRotate(270f); matrix.postScale(-1f, 1f) }
-            else -> return bmp
-        }
-        return Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
+        enrollLauncher.launch(Intent(this, FaceEnrollActivity::class.java).apply {
+            putExtra(FaceEnrollActivity.EXTRA_BRANCH_ID, branchId)
+            putExtra(FaceEnrollActivity.EXTRA_EMP_CODE, currentEmpCode)
+            putExtra(FaceEnrollActivity.EXTRA_EMP_NAME, binding.tvEmpName.text.toString())
+        })
     }
 
     // ── Register face ────────────────────────────────────────────
@@ -208,18 +233,20 @@ class OnBoardingActivity : AppCompatActivity() {
                 Toast.makeText(this, "No employee selected", Toast.LENGTH_SHORT).show()
                 return@setOnClickListener
             }
-            registerFace(currentEmpCode, base64)
+            registerFace(currentEmpCode, base64, capturedTemplate?.toList())
         }
     }
 
-    private fun registerFace(empCode: String, base64: String) {
+    private fun registerFace(empCode: String, base64: String, embeddingMobile: List<Float>?) {
         binding.progressBar.visibility = View.VISIBLE
         binding.btnRegisterFace.isEnabled = false
 
         val request = OnBoardingRegisterRequest(
             empCode = empCode,
             faceImage = base64,
-            branchId = if (branchId > 0) branchId else null
+            branchId = if (branchId > 0) branchId else null,
+            embeddingMobile = embeddingMobile,
+            mobileModelVer = if (embeddingMobile != null) MOBILE_MODEL_VER else null
         )
         RetrofitClient.getApiService(this).registerOnBoardingFace(request)
             .enqueue(object : Callback<OnBoardingRegisterResponse> {
@@ -227,13 +254,33 @@ class OnBoardingActivity : AppCompatActivity() {
                     binding.progressBar.visibility = View.GONE
                     val body = response.body()
                     if (response.isSuccessful && body?.status == "success") {
-                        Toast.makeText(this@OnBoardingActivity, body.message ?: "Face registered!", Toast.LENGTH_LONG).show()
+                        val queued = body.queued == true
+                        Toast.makeText(
+                            this@OnBoardingActivity,
+                            when {
+                                queued -> "Saved offline — the enrolment uploads and is " +
+                                    "verified when the network returns."
+                                else -> body.message ?: "Face registered!"
+                            },
+                            Toast.LENGTH_LONG
+                        ).show()
                         capturedBase64 = null
+                        capturedTemplate = null
                         binding.ivFacePreview.setImageResource(R.drawable.ic_person)
-                        // Reload employee to refresh count
-                        loadEmployee(empCode)
+                        if (queued) {
+                            // No server to re-read the face count from; leave the
+                            // card as-is so the operator can enrol the next person.
+                            binding.btnRegisterFace.isEnabled = false
+                        } else {
+                            // Reload employee to refresh count
+                            loadEmployee(empCode)
+                        }
                     } else {
-                        val msg = body?.message ?: "Failed to register face"
+                        // 4xx bodies are in errorBody(), not body() — e.g. the
+                        // server's "No face detected in the image".
+                        val msg = body?.message
+                            ?: response.errorBody()?.string()?.let { extractErrorMessage(it) }
+                            ?: "Failed to register face (HTTP ${response.code()})"
                         Toast.makeText(this@OnBoardingActivity, msg, Toast.LENGTH_LONG).show()
                         binding.btnRegisterFace.isEnabled = true
                     }

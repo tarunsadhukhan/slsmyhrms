@@ -36,6 +36,11 @@ import com.example.slsHrms.api.RetrofitClient
 import com.example.slsHrms.api.Shift
 import com.example.slsHrms.api.ShiftResponse
 import com.example.slsHrms.databinding.ActivityAttendanceBinding
+import com.example.slsHrms.face.FaceGallery
+import com.example.slsHrms.sync.Connectivity
+import com.example.slsHrms.sync.OfflineEmployees
+import com.example.slsHrms.sync.OfflinePhotoStore
+import com.example.slsHrms.sync.SyncEngine
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -66,6 +71,12 @@ class AttendanceActivity : AppCompatActivity() {
     // face-validate button (4th button). Such attendance is saved as "Face".
     // Reset whenever the employee code changes by any other means.
     private var faceValidated = false
+    // Set when the identity came from the ON-DEVICE matcher (no network). The
+    // capture and its score travel with the record so the server can re-run
+    // dlib on it; the file is deleted as soon as the record uploads.
+    private var matchedOffline = false
+    private var offlinePhotoPath: String? = null
+    private var offlineConfidence: Double = 0.0
     // Leave state (vw_leave_dates) for the verified employee on the selected
     // date. leavePayable: null = not on leave, "Y" = paid leave (only Cash/OT
     // allowed), anything else = unpaid leave (Submit disabled).
@@ -214,6 +225,21 @@ class AttendanceActivity : AppCompatActivity() {
                 // setText above, whose TextWatcher would otherwise clear the flag.
                 // Attendance submitted now is recorded with source "Face".
                 faceValidated = true
+
+                // An offline match is provisional: carry the capture and the
+                // score through to submit so the server can re-verify with dlib.
+                OfflinePhotoStore.delete(offlinePhotoPath)
+                matchedOffline = result.data?.getBooleanExtra(
+                    FaceValidateActivity.EXTRA_MATCHED_OFFLINE, false
+                ) == true
+                offlinePhotoPath =
+                    result.data?.getStringExtra(FaceValidateActivity.EXTRA_PHOTO_PATH)
+                offlineConfidence =
+                    result.data?.getDoubleExtra(FaceValidateActivity.EXTRA_CONFIDENCE, 0.0) ?: 0.0
+                if (matchedOffline) {
+                    binding.tvEmployeeName.text =
+                        "Employee: $empName  ·  face matched on device, server re-verifies"
+                }
             }
         }
     }
@@ -663,6 +689,15 @@ class AttendanceActivity : AppCompatActivity() {
         leavePayable = null
         binding.btnSubmit.isEnabled = true
 
+        // No network: the lookup endpoint cannot answer and blocking Submit here
+        // would stop the shop floor. Accept the code provisionally — the server
+        // rejects an unknown employee at sync time and the row lands in the Sync
+        // Center as a CONFLICT, which is visible instead of lost.
+        if (!Connectivity.isOnline(this)) {
+            verifyOffline(empCode)
+            return
+        }
+
         RetrofitClient.getApiService(this).getEmployeeByCode(
             empCode = empCode,
             branchId = if (selectedBranchId > 0) selectedBranchId else null
@@ -711,15 +746,29 @@ class AttendanceActivity : AppCompatActivity() {
                                 Toast.LENGTH_SHORT
                             ).show()
                         }
+                    } else if (response.code() == 504) {
+                        // OkHttp's synthetic "unsatisfiable cache request": we are
+                        // effectively offline with nothing cached for this code.
+                        // Not the same as "no such employee".
+                        verifyOffline(empCode)
                     } else {
+                        // 4xx bodies live in errorBody(): a 403 here carries the
+                        // reason ("… is in HR status OPEN — not eligible"), which
+                        // matters when the face was just recognised on the device.
+                        val reason = response.errorBody()?.string()?.let { extractErrorMessage(it) }
+                            ?.takeIf { it.isNotBlank() && !it.trimStart().startsWith("<") }
                         isEmployeeVerified = false
-                        binding.tvEmployeeName.text = "⚠ Employee not found"
+                        binding.tvEmployeeName.text = when {
+                            reason != null -> "⚠ $reason"
+                            faceValidated -> "⚠ $empCode recognised by face but not accepted by the server for attendance"
+                            else -> "⚠ Employee not found"
+                        }
                         binding.cardEmployeeInfo.visibility = View.VISIBLE
                         binding.ivEmployeePhoto.setImageResource(R.drawable.ic_person)
                         Toast.makeText(
                             this@AttendanceActivity,
-                            "Employee code not found",
-                            Toast.LENGTH_SHORT
+                            reason ?: "Employee code not found",
+                            Toast.LENGTH_LONG
                         ).show()
                     }
                 }
@@ -727,16 +776,76 @@ class AttendanceActivity : AppCompatActivity() {
                 override fun onFailure(call: Call<FaceRecognitionResponse>, t: Throwable) {
                     binding.progressBar.visibility = View.GONE
                     binding.btnCheck.isEnabled = true
-                    binding.tvEmployeeName.text = "⚠ Network error"
-                    binding.cardEmployeeInfo.visibility = View.VISIBLE
-                    binding.ivEmployeePhoto.setImageResource(R.drawable.ic_person)
-                    Toast.makeText(
-                        this@AttendanceActivity,
-                        "Network error: ${t.localizedMessage}",
-                        Toast.LENGTH_LONG
-                    ).show()
+                    // The server went away between the check and now — same
+                    // reasoning as the offline branch above.
+                    verifyOffline(empCode)
                 }
             })
+    }
+
+    /**
+     * Provisional verification with no server. The cached face gallery doubles as
+     * an offline employee directory for everyone with an enrolled face; anyone
+     * else is accepted on the operator's word and validated on upload.
+     */
+    private fun verifyOffline(empCode: String) {
+        binding.progressBar.visibility = View.GONE
+        binding.btnCheck.isEnabled = true
+        isEmployeeVerified = true
+        // Leave status needs the server; offline we cannot know, so no
+        // restriction is applied and the server re-checks on save.
+        leavePayable = null
+
+        binding.tvEmployeeName.text = "Employee: $empCode  ·  offline"
+        binding.cardEmployeeInfo.visibility = View.VISIBLE
+        binding.ivEmployeePhoto.setImageResource(R.drawable.ic_person)
+        Toast.makeText(this, "Offline — will be verified when the network returns",
+            Toast.LENGTH_SHORT).show()
+
+        // The gallery lookup touches the local DB, so it cannot run here.
+        kotlin.concurrent.thread {
+            val known = FaceGallery.lookupByCode(this, selectedBranchId, empCode)
+            // The face gallery only holds people whose mobile embedding has been
+            // backfilled server-side, so it is empty until that job runs. The
+            // downloaded employee list is the directory that is actually there,
+            // and it is what turns this screen from "accept anything" into a
+            // real offline check.
+            val directory = if (known == null) OfflineEmployees.directory(this) else null
+            val name = known?.second ?: directory?.get(empCode.trim().uppercase())
+            // Enrolment-photo thumbnail from the gallery — the offline stand-in
+            // for the photo_html the server shows online.
+            val photo = if (known != null) FaceGallery.thumbFor(this, selectedBranchId, empCode)
+                ?.let { android.graphics.BitmapFactory.decodeByteArray(it, 0, it.size) } else null
+
+            runOnUiThread {
+                if (isFinishing) return@runOnUiThread
+                photo?.let { binding.ivEmployeePhoto.setImageBitmap(it) }
+                when {
+                    name != null -> {
+                        known?.let { verifiedEbId = it.first }
+                        binding.tvEmployeeName.text = "Employee: $name  ·  offline"
+                    }
+                    // We hold the downloaded list and this code is not in it:
+                    // that is a typo, not a sync gap. Say so and block Submit,
+                    // rather than queueing a punch the server will only reject
+                    // hours later when nobody is standing at the gate.
+                    directory != null -> {
+                        isEmployeeVerified = false
+                        binding.tvEmployeeName.text =
+                            "⚠ $empCode is not in the downloaded employee list"
+                        Toast.makeText(
+                            this@AttendanceActivity,
+                            "No employee with code $empCode — check the code, or " +
+                                "connect once to refresh the downloaded list.",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    // Nothing downloaded to check against. Stay provisional:
+                    // a device that has never synced must not stop the gate.
+                    else -> Unit
+                }
+            }
+        }
     }
 
     // ── Leave check (vw_leave_dates) ─────────────────────────────
@@ -826,8 +935,8 @@ class AttendanceActivity : AppCompatActivity() {
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, displayList)
         listView.adapter = adapter
 
-        // Load all employees
-        RetrofitClient.getApiService(this).getEmployees()
+        // Only JOINED employees: anyone else is refused by /employee/<code> anyway.
+        RetrofitClient.getApiService(this).getEmployees(joined = 1)
             .enqueue(object : Callback<EmployeeResponse> {
                 override fun onResponse(call: Call<EmployeeResponse>, response: Response<EmployeeResponse>) {
                     if (response.isSuccessful) {
@@ -1065,6 +1174,20 @@ class AttendanceActivity : AppCompatActivity() {
         attendanceDate: String, shiftHours: Double, workingHours: Double, idleHours: Double,
         getLocation: String
     ) {
+        // /attendance identifies the person server-side with dlib, so it cannot
+        // be queued — there is nobody to match against offline. Point the
+        // operator at the two paths that do work without a network.
+        if (!Connectivity.isOnline(this)) {
+            showAlert(
+                "No network",
+                "Photo attendance needs a connection because the server does the " +
+                    "matching.\n\nUse the face-validate button (matches on this " +
+                    "device) or enter the employee code manually — both save offline.",
+                AlertType.WARNING
+            )
+            return
+        }
+
         binding.progressBar.visibility = View.VISIBLE
         binding.btnSubmit.isEnabled = false
 
@@ -1293,6 +1416,16 @@ class AttendanceActivity : AppCompatActivity() {
         binding.progressBar.visibility = View.VISIBLE
         binding.btnSubmit.isEnabled = false
 
+        // An offline match travels with its capture so the server can re-verify.
+        // Online, the JPEG is inlined; offline, only the path goes on the header
+        // and OfflineInterceptor keeps the image out of the queued payload.
+        val online = Connectivity.isOnline(this)
+        val inlinePhoto = if (matchedOffline && online) {
+            offlinePhotoPath
+                ?.let { OfflinePhotoStore.read(this, it) }
+                ?.let { AndroidBase64.encodeToString(it, AndroidBase64.NO_WRAP) }
+        } else null
+
         val request = com.example.slsHrms.api.MarkAttendanceRequest(
             empCode = empCode,
             status = status,
@@ -1306,10 +1439,14 @@ class AttendanceActivity : AppCompatActivity() {
             idleHours = idleHours,
             machineIds = if (selectedMachineIds.isNotEmpty()) selectedMachineIds.toList() else null,
             branchId = if (selectedBranchId > 0) selectedBranchId else null,
-            getLocation = getLocation
+            getLocation = getLocation,
+            matchedOffline = if (matchedOffline) true else null,
+            matchConfidence = if (matchedOffline) offlineConfidence else null,
+            faceImageB64 = inlinePhoto
         )
 
-        RetrofitClient.getApiService(this).markAttendanceManual(request)
+        RetrofitClient.getApiService(this)
+            .markAttendanceManual(request, if (matchedOffline) offlinePhotoPath else null)
             .enqueue(object : Callback<FaceRecognitionResponse> {
                 override fun onResponse(
                     call: Call<FaceRecognitionResponse>,
@@ -1323,14 +1460,28 @@ class AttendanceActivity : AppCompatActivity() {
                     if (response.isSuccessful) {
                         val result = response.body()
                         if (result != null && result.status == "success") {
-                            showAlert(
-                                "Success",
-                                "Attendance marked for ${result.empName}!",
-                                AlertType.SUCCESS
-                            )
+                            val who = result.empName?.takeIf { it.isNotBlank() } ?: empCode
+                            if (result.queued == true) {
+                                showAlert(
+                                    "Saved offline",
+                                    "Attendance for $who is saved on this device and will " +
+                                        "upload automatically when the network returns.",
+                                    AlertType.SUCCESS
+                                )
+                            } else {
+                                showAlert("Success", "Attendance marked for $who!", AlertType.SUCCESS)
+                            }
+                            // Start the face cooldown clock for this employee.
+                            if (faceValidated) com.example.slsHrms.face.FacePrefs.notePunch(empCode)
                             // Clear form for next entry
                             capturedBase64 = null
                             isEmployeeVerified = false
+                            // The outbox owns the capture from here; a live send
+                            // already uploaded it, so drop our copy either way.
+                            if (result.queued != true) OfflinePhotoStore.delete(offlinePhotoPath)
+                            matchedOffline = false
+                            offlinePhotoPath = null
+                            offlineConfidence = 0.0
                             binding.etEmployeeCode.setText("")
                             binding.cardEmployeeInfo.visibility = View.GONE
                             binding.ivEmployeePhoto.setImageResource(R.drawable.ic_person)
@@ -1427,6 +1578,9 @@ class AttendanceActivity : AppCompatActivity() {
     }
 
     private fun loadMachines(designationId: Int, adapter: com.example.slsHrms.adapter.MachineSelectionAdapter? = null) {
+        // Remember which designations this gate actually uses, so the Download
+        // button warms their machine lists and not 186 irrelevant ones.
+        SyncEngine.rememberDesignation(this, designationId)
         RetrofitClient.getApiService(this).getMachines(designationId).enqueue(
             object : Callback<com.example.slsHrms.api.MachineResponse> {
                 override fun onResponse(
@@ -1578,6 +1732,7 @@ class AttendanceActivity : AppCompatActivity() {
         // Claim this designation now (synchronously) so the spinner's change
         // listener doesn't wipe the machines we're about to auto-select for it.
         machinesForDesignationId = designationId
+        SyncEngine.rememberDesignation(this, designationId)
         RetrofitClient.getApiService(this).getMachines(designationId).enqueue(
             object : Callback<com.example.slsHrms.api.MachineResponse> {
                 override fun onResponse(
