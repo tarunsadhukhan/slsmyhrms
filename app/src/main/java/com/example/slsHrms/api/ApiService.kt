@@ -56,6 +56,9 @@ interface ApiService {
         @Query("sub_dept_id") subDeptId: Int? = null
     ): Call<DesignationResponse>
 
+    @GET(ApiRoutes.EMPLOYEES_LAST_ENTRIES)
+    fun getLastEntries(@Query("branch_id") branchId: Int): Call<LastEntriesResponse>
+
     @POST(ApiRoutes.DEPARTMENTS)
     fun addDepartment(@Body request: AddDepartmentRequest): Call<AddDepartmentResponse>
 
@@ -227,7 +230,7 @@ interface ApiService {
 
     // ── Leave Types ────────────────────────────────────────────
     @GET(ApiRoutes.LEAVE_TYPES)
-    fun getLeaveTypes(): Call<LeaveTypeResponse>
+    fun getLeaveTypes(@Query("branch_id") branchId: Int? = null): Call<LeaveTypeResponse>
 
     // ── Status Master ──────────────────────────────────────────
     @GET(ApiRoutes.STATUS_MST)
@@ -246,8 +249,20 @@ interface ApiService {
     @POST(ApiRoutes.LEAVE_TRANSACTIONS)
     fun saveLeaveTransaction(@Body request: LeaveSaveRequest): Call<LeaveSaveResponse>
 
-    @DELETE(ApiRoutes.LEAVE_TRANSACTION_DETAIL)
-    fun deleteLeaveTransaction(@Path("id") id: Int): Call<LeaveSaveResponse>
+    // ── Canteen Entries ────────────────────────────────────────
+    @GET(ApiRoutes.CANTEEN_ENTRIES)
+    fun getCanteenEntries(
+        @Query("branch_id") branchId: Int? = null,
+        @Query("from_date") fromDate: String? = null,
+        @Query("to_date")   toDate: String? = null,
+        @Query("emp_code")  empCode: String? = null
+    ): Call<CanteenListResponse>
+
+    @POST(ApiRoutes.CANTEEN_ENTRIES)
+    fun saveCanteenEntry(@Body request: CanteenSaveRequest): Call<LeaveSaveResponse>
+
+    @DELETE(ApiRoutes.CANTEEN_ENTRY_DETAIL)
+    fun deleteCanteenEntry(@Path("id") id: Int): Call<LeaveSaveResponse>
 
     // ── Spinning Doff ─────────────────────────────────────────────
     @GET(ApiRoutes.SPELLS)

@@ -1,15 +1,14 @@
 package com.example.slsHrms
 
 import android.app.DatePickerDialog
+import android.graphics.Color
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
+import android.view.inputmethod.EditorInfo
 import android.widget.*
-import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.example.slsHrms.adapter.LeaveTransactionAdapter
+import androidx.core.widget.doAfterTextChanged
 import com.example.slsHrms.api.*
 import retrofit2.Call
 import retrofit2.Callback
@@ -18,33 +17,47 @@ import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
 
+/**
+ * Leave entry: a form (EB No/Name, Leave Type, From/To, Non Working Days with
+ * the computed Leave Days, Remarks, Save) over a read-only table of the
+ * branch's leaves in the From/To filter, newest first. Saved as status 3.
+ */
 class LeaveEntryActivity : AppCompatActivity() {
 
     private val apiDate  = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
     private val dispDate = SimpleDateFormat("dd-MM-yyyy", Locale.getDefault())
 
     private var branchId = 0
-    private var userId   = 0          // logged-in user_id
+    private var userId   = 0
+    private var leaveTypes = listOf<LeaveType>()
 
-    private var filterFromDate = ""
-    private var filterToDate   = ""
-    private var filterEbId     = 0
+    // Form state
+    private var ebId = 0
+    private var from = ""
+    private var to   = ""
+    // Records filter
+    private var filterFrom = ""
+    private var filterTo   = ""
 
-    private lateinit var adapter: LeaveTransactionAdapter
-    private lateinit var rvLeave: RecyclerView
+    private lateinit var etEbNo: EditText
+    private lateinit var tvName: TextView
+    private lateinit var spType: Spinner
+    private lateinit var tvFrom: TextView
+    private lateinit var tvTo: TextView
+    private lateinit var etNonWorking: EditText
+    private lateinit var tvLeaveDays: TextView
+    private lateinit var etRemarks: EditText
+    private lateinit var btnSave: Button
+    private lateinit var tvFilterFrom: TextView
+    private lateinit var tvFilterTo: TextView
+    private lateinit var rows: LinearLayout
     private lateinit var progressBar: ProgressBar
     private lateinit var tvEmpty: TextView
-    private lateinit var tvFromDate: TextView
-    private lateinit var tvToDate: TextView
-    private lateinit var etFilterEmpCode: EditText
-    private lateinit var tvFilterEmpName: TextView
-
-    // Masters loaded from API
-    private val leaveTypeList = mutableListOf<LeaveType>()
+    private lateinit var tvTotal: TextView
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_leave_v2)
+        setContentView(R.layout.activity_leave_entry)
 
         branchId = intent.getIntExtra("BRANCH_ID", 0)
         userId   = getSharedPreferences("LoginPrefs", MODE_PRIVATE).getInt("user_id", 0)
@@ -55,140 +68,125 @@ class LeaveEntryActivity : AppCompatActivity() {
         supportActionBar?.setDisplayShowTitleEnabled(false)
         toolbar.setNavigationOnClickListener { finish() }
 
-        rvLeave         = findViewById(R.id.rvLeave)
-        progressBar     = findViewById(R.id.progressBar)
-        tvEmpty         = findViewById(R.id.tvEmpty)
-        tvFromDate      = findViewById(R.id.tvFromDate)
-        tvToDate        = findViewById(R.id.tvToDate)
-        etFilterEmpCode = findViewById(R.id.etEmpCode)
-        tvFilterEmpName = findViewById(R.id.tvFilterEmpName)
+        etEbNo       = findViewById(R.id.etEbNo)
+        tvName       = findViewById(R.id.tvName)
+        spType       = findViewById(R.id.spLeaveType)
+        tvFrom       = findViewById(R.id.tvFrom)
+        tvTo         = findViewById(R.id.tvTo)
+        etNonWorking = findViewById(R.id.etNonWorking)
+        tvLeaveDays  = findViewById(R.id.tvLeaveDays)
+        etRemarks    = findViewById(R.id.etRemarks)
+        btnSave      = findViewById(R.id.btnSave)
+        tvFilterFrom = findViewById(R.id.tvFilterFrom)
+        tvFilterTo   = findViewById(R.id.tvFilterTo)
+        rows         = findViewById(R.id.rowsContainer)
+        progressBar  = findViewById(R.id.progressBar)
+        tvEmpty      = findViewById(R.id.tvEmpty)
+        tvTotal      = findViewById(R.id.tvTotal)
 
-        // Default date range: this month
+        // ── Form ──
+        // Look the name up ~0.6 s after typing stops: tapping the Leave Type
+        // spinner never takes focus from this box, so focus-loss alone missed it.
+        val lookupSoon = Runnable { lookup() }
+        etEbNo.doAfterTextChanged {
+            ebId = 0; tvName.text = ""
+            etEbNo.removeCallbacks(lookupSoon)
+            if (!it.isNullOrBlank()) etEbNo.postDelayed(lookupSoon, 600)
+        }
+        etEbNo.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) lookup() }
+        etEbNo.setOnEditorActionListener { _, actionId, _ ->
+            if (actionId == EditorInfo.IME_ACTION_DONE) lookup()
+            false
+        }
+        tvFrom.setOnClickListener {
+            pickDate(from) { from = it; if (to < it) to = it; showFormDates() }
+        }
+        tvTo.setOnClickListener {
+            pickDate(to) {
+                if (it < from) showAlert("To Date", "To Date cannot be before From Date", AlertType.WARNING)
+                else { to = it; showFormDates() }
+            }
+        }
+        etNonWorking.doAfterTextChanged { showLeaveDays() }
+        btnSave.setOnClickListener { save() }
+        resetForm()
+
+        // ── Records filter: this month ──
         val cal = Calendar.getInstance()
-        filterToDate = apiDate.format(cal.time)
+        filterTo = apiDate.format(cal.time)
         cal.set(Calendar.DAY_OF_MONTH, 1)
-        filterFromDate = apiDate.format(cal.time)
-        tvFromDate.text = dispDate.format(apiDate.parse(filterFromDate)!!)
-        tvToDate.text   = dispDate.format(apiDate.parse(filterToDate)!!)
-
-        // Date pickers
-        findViewById<View>(R.id.btnFromDate).setOnClickListener { pickDate(true) }
-        findViewById<View>(R.id.btnToDate).setOnClickListener   { pickDate(false) }
-
-        // Employee search wiring
-        val btnSearchEmpFilter = findViewById<android.widget.ImageView>(R.id.btnSearchEmp)
-        btnSearchEmpFilter.setOnClickListener { lookupFilterEmployee() }
-        etFilterEmpCode.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) lookupFilterEmployee() }
-        etFilterEmpCode.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) {
-                lookupFilterEmployee(); true
-            } else false
+        filterFrom = apiDate.format(cal.time)
+        tvFilterFrom.text = disp(filterFrom)
+        tvFilterTo.text   = disp(filterTo)
+        tvFilterFrom.setOnClickListener { pickDate(filterFrom) { filterFrom = it; tvFilterFrom.text = disp(it) } }
+        tvFilterTo.setOnClickListener   { pickDate(filterTo)   { filterTo = it;   tvFilterTo.text = disp(it) } }
+        findViewById<Button>(R.id.btnSubmit).setOnClickListener {
+            if (filterTo < filterFrom) showAlert("Filter", "To Date cannot be before From Date", AlertType.WARNING)
+            else loadRecords()
         }
 
-        // RecyclerView
-        adapter = LeaveTransactionAdapter(emptyList(),
-            onEdit   = { showLeaveDialog(it) },
-            onDelete = { confirmDelete(it) })
-        rvLeave.layoutManager = LinearLayoutManager(this)
-        rvLeave.adapter = adapter
-
-        // Search
-        findViewById<Button>(R.id.btnSearch).setOnClickListener {
-            val empCode = etFilterEmpCode.text.toString().trim().takeIf { it.isNotEmpty() }
-            loadLeaves(empCode)
-        }
-
-        // Add New
-        findViewById<Button>(R.id.btnAddNew).setOnClickListener { showLeaveDialog(null) }
-
-        // Load masters then initial list
+        if (branchId <= 0) showAlert("Missing Branch", "Select a branch on the dashboard first", AlertType.WARNING)
         loadLeaveTypes()
-        loadLeaves(null)
+        loadRecords()
     }
 
-    // ── Employee lookup for filter ──────────────────────────────────────────────
-    private fun lookupFilterEmployee() {
-        val code = etFilterEmpCode.text.toString().trim()
-        if (code.isEmpty()) { tvFilterEmpName.text = ""; filterEbId = 0; return }
-        tvFilterEmpName.text = "Searching…"
-        RetrofitClient.getApiService(this).searchEmployees(code, if (branchId > 0) branchId else null)
-            .enqueue(object : Callback<EmployeeResponse> {
-                override fun onResponse(call: Call<EmployeeResponse>, response: Response<EmployeeResponse>) {
-                    val emp = response.body()?.employees?.firstOrNull {
-                        it.empCode.equals(code, ignoreCase = true)
-                    } ?: response.body()?.employees?.firstOrNull()
-                    if (emp != null) {
-                        filterEbId = emp.id
-                        tvFilterEmpName.text = emp.name
-                    } else {
-                        filterEbId = 0
-                        tvFilterEmpName.text = "Not found"
-                    }
-                }
-                override fun onFailure(call: Call<EmployeeResponse>, t: Throwable) {
-                    filterEbId = 0; tvFilterEmpName.text = "Lookup failed"
-                }
-            })
-    }
+    private fun disp(api: String?) =
+        if (api.isNullOrEmpty()) "" else try { dispDate.format(apiDate.parse(api)!!) } catch (_: Exception) { api }
 
-    // ── Date Pickers ───────────────────────────────────────────────────────────
-
-    private fun pickDate(isFrom: Boolean) {
+    private fun pickDate(current: String, onPicked: (String) -> Unit) {
         val cal = Calendar.getInstance()
-        val src = if (isFrom) filterFromDate else filterToDate
-        try { apiDate.parse(src)?.let { cal.time = it } } catch (_: Exception) {}
+        try { apiDate.parse(current)?.let { cal.time = it } } catch (_: Exception) {}
         DatePickerDialog(this, { _, y, m, d ->
             cal.set(y, m, d)
-            val api  = apiDate.format(cal.time)
-            val disp = dispDate.format(cal.time)
-            if (isFrom) { filterFromDate = api; tvFromDate.text = disp }
-            else        { filterToDate   = api; tvToDate.text   = disp }
+            onPicked(apiDate.format(cal.time))
         }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
     }
 
-    // ── Load Leave Transactions ────────────────────────────────────────────────
+    // ── Form helpers ───────────────────────────────────────────────────────────
 
-    private fun loadLeaves(empCode: String?) {
-        progressBar.visibility = View.VISIBLE
-        tvEmpty.visibility     = View.GONE
-        rvLeave.visibility     = View.GONE
-
-        RetrofitClient.getApiService(this).getLeaveTransactions(
-            branchId = if (branchId > 0) branchId else null,
-            fromDate = filterFromDate,
-            toDate   = filterToDate,
-            empCode  = empCode,
-            statusId = null
-        ).enqueue(object : Callback<LeaveListResponse> {
-            override fun onResponse(call: Call<LeaveListResponse>, response: Response<LeaveListResponse>) {
-                progressBar.visibility = View.GONE
-                val list = response.body()?.transactions.orEmpty()
-                if (list.isEmpty()) {
-                    tvEmpty.visibility = View.VISIBLE
-                } else {
-                    rvLeave.visibility = View.VISIBLE
-                    adapter.update(list)
-                }
-            }
-            override fun onFailure(call: Call<LeaveListResponse>, t: Throwable) {
-                progressBar.visibility = View.GONE
-                tvEmpty.visibility = View.VISIBLE
-                Toast.makeText(this@LeaveEntryActivity, "Error: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
-            }
-        })
+    private fun resetForm() {
+        etEbNo.setText("")                      // its watcher clears ebId + name
+        from = apiDate.format(Calendar.getInstance().time)
+        to = from
+        showFormDates()
+        etNonWorking.setText("0")
+        etRemarks.setText("")
+        if (spType.adapter != null) spType.setSelection(0)
+        etEbNo.requestFocus()
     }
 
-    // ── Load Leave Types ───────────────────────────────────────────────────────
+    private fun showFormDates() {
+        tvFrom.text = disp(from)
+        tvTo.text   = disp(to)
+        showLeaveDays()
+    }
+
+    private fun totalDays() =
+        ((apiDate.parse(to)!!.time - apiDate.parse(from)!!.time) / 86_400_000L + 1).toInt()
+
+    private fun nonWorking() = etNonWorking.text.toString().trim().ifEmpty { "0" }.toIntOrNull() ?: 0
+
+    /** Leave Days = To − From + 1 − Non Working Days. */
+    private fun leaveDays() = totalDays() - nonWorking()
+
+    private fun showLeaveDays() {
+        val days = leaveDays()
+        tvLeaveDays.text = days.toString()
+        tvLeaveDays.setTextColor(if (days < 1) Color.parseColor("#C62828") else Color.parseColor("#1B5E20"))
+    }
+
+    // ── Masters ────────────────────────────────────────────────────────────────
 
     private fun loadLeaveTypes() {
-        RetrofitClient.getApiService(this).getLeaveTypes()
+        RetrofitClient.getApiService(this).getLeaveTypes(branchId.takeIf { it > 0 })
             .enqueue(object : Callback<LeaveTypeResponse> {
                 override fun onResponse(call: Call<LeaveTypeResponse>, response: Response<LeaveTypeResponse>) {
-                    if (response.isSuccessful) {
-                        response.body()?.leaveTypes?.let {
-                            leaveTypeList.clear()
-                            leaveTypeList.addAll(it)
-                        }
+                    leaveTypes = response.body()?.leaveTypes.orEmpty()
+                    spType.adapter = ArrayAdapter(this@LeaveEntryActivity, R.layout.spinner_item_black,
+                        listOf("Select Leave Type") + leaveTypes.map { it.name })
+                        .also { it.setDropDownViewResource(R.layout.spinner_dropdown_item_black) }
+                    if (leaveTypes.isEmpty()) {
+                        Toast.makeText(this@LeaveEntryActivity, "No leave types found", Toast.LENGTH_SHORT).show()
                     }
                 }
                 override fun onFailure(call: Call<LeaveTypeResponse>, t: Throwable) {
@@ -197,221 +195,128 @@ class LeaveEntryActivity : AppCompatActivity() {
             })
     }
 
-    // ── Add / Edit Dialog ──────────────────────────────────────────────────────
+    // ── EB No lookup ───────────────────────────────────────────────────────────
 
-    private fun showLeaveDialog(existing: LeaveTransaction?) {
-        val view = LayoutInflater.from(this).inflate(R.layout.dialog_leave_entry, null)
-
-        val etEmpCode    = view.findViewById<EditText>(R.id.etDialogEmpCode)
-        val tvEmpName    = view.findViewById<TextView>(R.id.tvDialogEmpName)
-        val btnSearchEmp = view.findViewById<android.widget.ImageView>(R.id.btnSearchEmp)
-        val spLeaveType  = view.findViewById<Spinner>(R.id.spDialogLeaveType)
-        val tvFrom       = view.findViewById<TextView>(R.id.tvDialogFromDate)
-        val tvTo         = view.findViewById<TextView>(R.id.tvDialogToDate)
-        val btnFrom      = view.findViewById<View>(R.id.btnDialogFromDate)
-        val btnTo        = view.findViewById<View>(R.id.btnDialogToDate)
-        val etDays       = view.findViewById<EditText>(R.id.etDialogDays)
-        val etReason     = view.findViewById<EditText>(R.id.etDialogReason)
-
-        // Leave type spinner
-        val leaveTypeNames = leaveTypeList.map { it.name }
-        spLeaveType.adapter = ArrayAdapter(this, R.layout.spinner_item_black, leaveTypeNames)
-            .also { it.setDropDownViewResource(R.layout.spinner_dropdown_item_black) }
-
-
-        var dialogEbId = existing?.ebId ?: 0
-        var dialogFrom = existing?.fromDate ?: ""
-        var dialogTo   = existing?.toDate   ?: ""
-
-        // Helper: recalculate no_of_days whenever from/to changes
-        fun calcDays() {
-            if (dialogFrom.isNotEmpty() && dialogTo.isNotEmpty()) {
-                try {
-                    val d1 = apiDate.parse(dialogFrom)!!
-                    val d2 = apiDate.parse(dialogTo)!!
-                    val days = (d2.time - d1.time) / 86400000L + 1
-                    etDays.setText(if (days > 0) days.toString() else "1")
-                } catch (_: Exception) { etDays.setText("") }
-            } else {
-                etDays.setText("")
-            }
-        }
-
-        // Pre-fill if editing
-        existing?.let { t ->
-            etEmpCode.setText(t.empCode ?: "")
-            tvEmpName.text = t.empName ?: ""
-            val ltIdx = leaveTypeList.indexOfFirst { it.id == t.leaveTypeId }
-            if (ltIdx >= 0) spLeaveType.setSelection(ltIdx)
-            tvFrom.text = t.fromDate?.let { safeReformat(it) } ?: ""
-            tvTo.text   = t.toDate?.let   { safeReformat(it) } ?: ""
-            etDays.setText(t.noOfDays?.let {
-                if (it % 1.0 == 0.0) it.toLong().toString() else it.toString()
-            } ?: "")
-            etReason.setText(t.reason ?: "")
-        }
-
-        // ── Employee lookup ────────────────────────────────────────────────────
-        fun lookupEmployee() {
-            val code = etEmpCode.text.toString().trim()
-            if (code.isEmpty()) { tvEmpName.text = ""; dialogEbId = 0; return }
-            tvEmpName.text = "Searching…"
-            RetrofitClient.getApiService(this).searchEmployees(code, if (branchId > 0) branchId else null)
-                .enqueue(object : Callback<EmployeeResponse> {
-                    override fun onResponse(call: Call<EmployeeResponse>, response: Response<EmployeeResponse>) {
-                        val emp = response.body()?.employees?.firstOrNull {
-                            it.empCode.equals(code, ignoreCase = true)
-                        } ?: response.body()?.employees?.firstOrNull()
-                        if (emp != null) {
-                            dialogEbId = emp.id
-                            tvEmpName.text = emp.name
-                        } else {
-                            dialogEbId = 0
-                            tvEmpName.text = "Not found"
-                            Toast.makeText(this@LeaveEntryActivity, "Employee not found", Toast.LENGTH_SHORT).show()
-                        }
-                    }
-                    override fun onFailure(call: Call<EmployeeResponse>, t: Throwable) {
-                        dialogEbId = 0; tvEmpName.text = "Lookup failed"
-                    }
-                })
-        }
-
-        btnSearchEmp.setOnClickListener { lookupEmployee() }
-        etEmpCode.setOnFocusChangeListener { _, hasFocus -> if (!hasFocus) lookupEmployee() }
-        etEmpCode.setOnEditorActionListener { _, actionId, _ ->
-            if (actionId == android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH) { lookupEmployee(); true } else false
-        }
-
-        // ── Date pickers ───────────────────────────────────────────────────────
-        fun pickDialogDate(isFrom: Boolean) {
-            val cal = Calendar.getInstance()
-            val src = if (isFrom) dialogFrom else dialogTo
-            try { apiDate.parse(src)?.let { cal.time = it } } catch (_: Exception) {}
-            DatePickerDialog(this, { _, y, m, d ->
-                cal.set(y, m, d)
-                val api  = apiDate.format(cal.time)
-                val disp = dispDate.format(cal.time)
-                if (isFrom) { dialogFrom = api; tvFrom.text = disp }
-                else        { dialogTo   = api; tvTo.text   = disp }
-                calcDays()
-            }, cal.get(Calendar.YEAR), cal.get(Calendar.MONTH), cal.get(Calendar.DAY_OF_MONTH)).show()
-        }
-
-        btnFrom.setOnClickListener { pickDialogDate(true) }
-        btnTo.setOnClickListener   { pickDialogDate(false) }
-
-        val title = if (existing == null) "Add Leave Entry" else "Edit Leave Entry"
-        AlertDialog.Builder(this, R.style.DarkDialogTheme)
-            .setTitle(title)
-            .setView(view)
-            .setPositiveButton("Save") { _, _ ->
-                if (dialogEbId <= 0) {
-                    showAlert("Missing Employee", "Please lookup a valid employee", AlertType.WARNING)
-                    return@setPositiveButton
+    private fun lookup(then: (() -> Unit)? = null) {
+        val code = etEbNo.text.toString().trim()
+        if (code.isEmpty()) return
+        if (ebId > 0) { then?.invoke(); return }
+        tvName.text = "Searching…"
+        RetrofitClient.getApiService(this).searchEmployees(code, branchId.takeIf { it > 0 })
+            .enqueue(object : Callback<EmployeeResponse> {
+                override fun onResponse(call: Call<EmployeeResponse>, response: Response<EmployeeResponse>) {
+                    // Exact EB No only — a partial match would book leave to the wrong person.
+                    val emp = response.body()?.employees?.firstOrNull { it.empCode.equals(code, ignoreCase = true) }
+                    if (etEbNo.text.toString().trim() != code) return   // typed on since
+                    ebId = emp?.id ?: 0
+                    tvName.text = emp?.name ?: "Not found in this branch"
+                    if (emp != null) then?.invoke()
                 }
-                if (dialogFrom.isEmpty() || dialogTo.isEmpty()) {
-                    showAlert("Missing Dates", "Please select dates", AlertType.WARNING)
-                    return@setPositiveButton
-                }
-                val selectedLeaveType = leaveTypeList.getOrNull(spLeaveType.selectedItemPosition)
-
-                if (selectedLeaveType == null || selectedLeaveType.id == null) {
-                    showAlert("Missing Leave Type", "Please select a leave type", AlertType.WARNING)
-                    return@setPositiveButton
-                }
-
-                val noOfDays = etDays.text.toString().trim().toDoubleOrNull() ?: 0.0
-
-                val req = LeaveSaveRequest(
-                    ebId         = dialogEbId,
-                    userId       = userId,
-                    leaveTypeId  = selectedLeaveType.id,
-                    fromDate     = dialogFrom,
-                    toDate       = dialogTo,
-                    noOfDays     = noOfDays,
-                    reason       = etReason.text.toString().trim(),
-                    remarks      = "",
-                    statusId     = 3,
-                    branchId     = if (branchId > 0) branchId else null,
-                    details      = buildDetails(dialogFrom, dialogTo)
-                )
-                saveLeave(req)
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-    }
-
-    private fun safeReformat(apiDateStr: String): String =
-        try { dispDate.format(apiDate.parse(apiDateStr)!!) } catch (_: Exception) { apiDateStr }
-
-    private fun buildDetails(from: String, to: String): List<LeaveTranDetailRequest> {
-        val result = mutableListOf<LeaveTranDetailRequest>()
-        try {
-            val cal = Calendar.getInstance()
-            cal.time = apiDate.parse(from)!!
-            val end  = apiDate.parse(to)!!
-            while (!cal.time.after(end)) {
-                result.add(LeaveTranDetailRequest(leaveDate = apiDate.format(cal.time)))
-                cal.add(Calendar.DAY_OF_MONTH, 1)
-            }
-        } catch (_: Exception) {}
-        return result
-    }
-
-    // ── Save ───────────────────────────────────────────────────────────────────
-
-    private fun saveLeave(req: LeaveSaveRequest) {
-        RetrofitClient.getApiService(this).saveLeaveTransaction(req)
-            .enqueue(object : Callback<LeaveSaveResponse> {
-                override fun onResponse(call: Call<LeaveSaveResponse>, response: Response<LeaveSaveResponse>) {
-                    val body = response.body()
-                    if (response.isSuccessful && body?.status == "success") {
-                        showAlert("Success", body.message ?: "Leave saved", AlertType.SUCCESS)
-                        loadLeaves(null)
-                    } else {
-                        // On an HTTP error the message is in errorBody, not body.
-                        val errMsg = body?.message
-                            ?: response.errorBody()?.string()?.let { extractErrorMessage(it) }
-                            ?: "Save failed (${response.code()})"
-                        showAlert("Leave Not Saved", errMsg)
-                    }
-                }
-                override fun onFailure(call: Call<LeaveSaveResponse>, t: Throwable) {
-                    showAlert("Network Error", t.localizedMessage ?: "Request failed")
+                override fun onFailure(call: Call<EmployeeResponse>, t: Throwable) {
+                    tvName.text = "Lookup failed"
                 }
             })
     }
 
-    // ── Delete ─────────────────────────────────────────────────────────────────
+    // ── Save (status 3 on the server) ──────────────────────────────────────────
 
-    private fun confirmDelete(item: LeaveTransaction) {
-        AlertDialog.Builder(this, R.style.DarkDialogTheme)
-            .setTitle("Delete Leave")
-            .setMessage("Delete leave entry for ${item.empName ?: item.empCode}?")
-            .setPositiveButton("Delete") { _, _ ->
-                val id = item.id ?: return@setPositiveButton
-                RetrofitClient.getApiService(this).deleteLeaveTransaction(id)
-                    .enqueue(object : Callback<LeaveSaveResponse> {
-                        override fun onResponse(call: Call<LeaveSaveResponse>, response: Response<LeaveSaveResponse>) {
-                            val body = response.body()
-                            if (response.isSuccessful && body?.status == "success") {
-                                showAlert("Deleted", body.message ?: "Leave entry deleted",
-                                    AlertType.SUCCESS)
-                            } else {
-                                val errMsg = body?.message
-                                    ?: response.errorBody()?.string()?.let { extractErrorMessage(it) }
-                                    ?: "Delete failed (${response.code()})"
-                                showAlert("Delete Failed", errMsg)
-                            }
-                            loadLeaves(null)
-                        }
-                        override fun onFailure(call: Call<LeaveSaveResponse>, t: Throwable) {
-                            showAlert("Network Error", t.localizedMessage ?: "Request failed")
-                        }
-                    })
+    private fun save() {
+        if (branchId <= 0) {
+            showAlert("Missing Branch", "Select a branch on the dashboard first", AlertType.WARNING); return
+        }
+        if (etEbNo.text.isNullOrBlank()) {
+            showAlert("Missing EB No", "Enter the EB No", AlertType.WARNING); return
+        }
+        if (ebId <= 0) {                    // lookup not finished yet: finish it, then save
+            lookup { save() }; return
+        }
+        val type = leaveTypes.getOrNull(spType.selectedItemPosition - 1)   // 0 = "Select Leave Type"
+        if (type?.id == null) {
+            showAlert("Missing Leave Type", "Select a leave type", AlertType.WARNING); return
+        }
+        if (leaveDays() < 1) {
+            showAlert("Leave Days", "Leave days must be at least 1 — reduce Non Working Days", AlertType.WARNING); return
+        }
+
+        btnSave.isEnabled = false
+        RetrofitClient.getApiService(this).saveLeaveTransaction(
+            LeaveSaveRequest(ebId, userId, type.id, from, to, nonWorking(),
+                etRemarks.text.toString().trim(), branchId)
+        ).enqueue(object : Callback<LeaveSaveResponse> {
+            override fun onResponse(call: Call<LeaveSaveResponse>, response: Response<LeaveSaveResponse>) {
+                btnSave.isEnabled = true
+                val body = response.body()
+                if (response.isSuccessful && body?.status == "success") {
+                    showAlert("Saved", "Leave saved for ${tvName.text} (${leaveDays()} day(s))", AlertType.SUCCESS)
+                    resetForm()
+                    loadRecords()
+                } else {
+                    // On an HTTP error the message is in errorBody, not body.
+                    val msg = body?.message
+                        ?: response.errorBody()?.string()?.let { extractErrorMessage(it) }
+                        ?: "Save failed (${response.code()})"
+                    showAlert("Leave Not Saved", msg)
+                }
             }
-            .setNegativeButton("Cancel", null)
-            .show()
+            override fun onFailure(call: Call<LeaveSaveResponse>, t: Throwable) {
+                btnSave.isEnabled = true
+                showAlert("Network Error", t.localizedMessage ?: "Request failed")
+            }
+        })
+    }
+
+    // ── Records table (newest first, from the server) ──────────────────────────
+
+    private fun loadRecords() {
+        progressBar.visibility = View.VISIBLE
+        tvEmpty.visibility = View.GONE
+        RetrofitClient.getApiService(this).getLeaveTransactions(
+            branchId = branchId.takeIf { it > 0 }, fromDate = filterFrom, toDate = filterTo
+        ).enqueue(object : Callback<LeaveListResponse> {
+            override fun onResponse(call: Call<LeaveListResponse>, response: Response<LeaveListResponse>) {
+                progressBar.visibility = View.GONE
+                if (!response.isSuccessful) {
+                    Toast.makeText(this@LeaveEntryActivity, "Could not load records (${response.code()})", Toast.LENGTH_SHORT).show()
+                }
+                showRecords(response.body()?.transactions.orEmpty())
+            }
+            override fun onFailure(call: Call<LeaveListResponse>, t: Throwable) {
+                progressBar.visibility = View.GONE
+                Toast.makeText(this@LeaveEntryActivity, "Error: ${t.localizedMessage}", Toast.LENGTH_SHORT).show()
+                showRecords(emptyList())
+            }
+        })
+    }
+
+    private fun showRecords(list: List<LeaveTransaction>) {
+        rows.removeAllViews()
+        val inflater = LayoutInflater.from(this)
+        var totalDays = 0
+        list.forEachIndexed { i, t ->
+            val v = inflater.inflate(R.layout.item_leave_record, rows, false)
+            val days = try {
+                ((apiDate.parse(t.toDate!!)!!.time - apiDate.parse(t.fromDate!!)!!.time) / 86_400_000L + 1).toInt() -
+                    (t.nonWorkingDays ?: 0)
+            } catch (_: Exception) { 0 }
+            if (t.statusId == 3) totalDays += days
+            v.findViewById<TextView>(R.id.tvEbNo).text    = t.empCode ?: ""
+            v.findViewById<TextView>(R.id.tvName).text    = t.empName ?: ""
+            v.findViewById<TextView>(R.id.tvType).text    = t.leaveType ?: "-"
+            v.findViewById<TextView>(R.id.tvFrom).text    = disp(t.fromDate)
+            v.findViewById<TextView>(R.id.tvTo).text      = disp(t.toDate)
+            v.findViewById<TextView>(R.id.tvNonWkg).text  = (t.nonWorkingDays ?: 0).toString()
+            v.findViewById<TextView>(R.id.tvDays).text    = days.toString()
+            v.findViewById<TextView>(R.id.tvRemarks).text = t.remarks ?: ""
+            v.findViewById<TextView>(R.id.tvStatus).apply {
+                text = t.status ?: t.statusId?.toString() ?: ""
+                setTextColor(Color.parseColor(when (t.statusId) {
+                    3 -> "#2E7D32"; 4, 6 -> "#C62828"; else -> "#EF6C00"
+                }))
+            }
+            if (i % 2 == 1) v.setBackgroundColor(0xFFF7F9FC.toInt())   // zebra rows
+            rows.addView(v)
+        }
+        tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+        tvTotal.text = "Records: ${list.size}   Approved leave days: $totalDays   (${disp(filterFrom)} to ${disp(filterTo)})"
     }
 }

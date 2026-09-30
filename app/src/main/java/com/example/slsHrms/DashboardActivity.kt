@@ -968,6 +968,13 @@ class DashboardActivity : AppCompatActivity() {
             intent.putExtra("BRANCH_ID", selectedBranchId)
             startActivity(intent)
         }
+
+        binding.menuCanteenEntry.setOnClickListener {
+            val intent = Intent(this, CanteenEntryActivity::class.java)
+            intent.putExtra("CO_ID", selectedCompanyId)
+            intent.putExtra("BRANCH_ID", selectedBranchId)
+            startActivity(intent)
+        }
     }
 
     private fun setupProductionMenu() {
@@ -1125,7 +1132,7 @@ class DashboardActivity : AppCompatActivity() {
 
         val groups = mapOf(
             "grp_attendance"      to GroupViews(binding.menuAttendance, null),
-            "grp_other_entries"   to GroupViews(binding.headerOtherEntries, binding.subMenuOtherEntries),
+            "grp_others"          to GroupViews(binding.headerOtherEntries, binding.subMenuOtherEntries),
             "grp_production"      to GroupViews(binding.menuProduction, null),
             "grp_jute"            to GroupViews(binding.headerJute, binding.subMenuJute),
             "grp_spreader_entry"  to GroupViews(binding.headerSpreaderEntry, binding.subMenuSpreaderEntry),
@@ -1165,7 +1172,8 @@ class DashboardActivity : AppCompatActivity() {
             "menu_onboarding"             to binding.menuOnBoarding,
             "menu_attendance_entry"       to binding.menuAttendanceEntry,
             "menu_attendance_reports"     to binding.menuAttendanceReports,
-            "menu_leave_entries"          to binding.menuLeaveEntries,
+            "leave_entries"               to binding.menuLeaveEntries,
+            "menu_canteen"                to binding.menuCanteenEntry,
             "menu_jute_received"          to binding.menuJuteReceived,
             "menu_assorting_entry"        to binding.menuAssortingEntry,
             "menu_production_entry"       to binding.menuProductionEntry,

@@ -102,6 +102,41 @@ android {
     }
 }
 
+// In-app updates (AppUpdater.kt): every release build also writes version.json next
+// to the APK. Copy both files to the backend's apk/ folder to roll the update out.
+// Optional: .\gradlew assembleRelease -PupdateNotes="What changed" -PforceUpdate=true
+val writeUpdateJson by tasks.registering {
+    val out = layout.buildDirectory.file("outputs/apk/release/version.json")
+    val notes = (findProperty("updateNotes") as String?).orEmpty().replace("\\", "\\\\").replace("\"", "\\\"")
+    val force = (findProperty("forceUpdate") as String?) == "true"
+    outputs.file(out)
+    outputs.upToDateWhen { false }
+    // Publish straight to the backend's update folder, so phones get the update
+    // without anyone copying files. -PapkDir=... or env APK_DIR overrides it.
+    val publishDir = file((findProperty("apkDir") as String?) ?: System.getenv("APK_DIR") ?: "D:/vownextjs/vowerp3be/apk")
+    doLast {
+        val json = out.get().asFile
+        json.writeText(
+            """{"versionCode":$appVersionCode,"versionName":"$appVersionName",""" +
+            """"apk":"VowHrms_v$appVersionName.apk","force":$force,"notes":"$notes"}""" + "\n")
+
+        if (!publishDir.isDirectory) {
+            logger.lifecycle("Update not published: $publishDir does not exist (set -PapkDir=...)")
+            return@doLast
+        }
+        val apk = json.resolveSibling("VowHrms_v$appVersionName.apk")
+        // APK first, version.json last (via rename): a phone must never see the
+        // new version before its APK is fully there.
+        apk.copyTo(publishDir.resolve(apk.name), overwrite = true)
+        json.copyTo(publishDir.resolve("version.json.tmp"), overwrite = true)
+            .renameTo(publishDir.resolve("version.json").also { it.delete() })
+        publishDir.listFiles { f -> f.name.matches(Regex("VowHrms_v.*\\.apk")) && f.name != apk.name }
+            ?.forEach { it.delete() }
+        logger.lifecycle("Update published: ${apk.name} (versionCode $appVersionCode) -> $publishDir")
+    }
+}
+tasks.matching { it.name == "assembleRelease" }.configureEach { finalizedBy(writeUpdateJson) }
+
 // Room schema exports — needed for migration tests and for diffing what a
 // schema change actually did.
 ksp {

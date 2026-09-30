@@ -23,6 +23,7 @@ object ApiRoutes {
 
     const val EMPLOYEES = "employees"
     const val EMPLOYEE_SEARCH = "employees/search"
+    const val EMPLOYEES_LAST_ENTRIES = "employees/last-entries"
     const val REGISTER = "register"
 
     const val DASHBOARD_STATS = "dashboard-stats"
@@ -39,7 +40,8 @@ object ApiRoutes {
     const val STATUS_MST             = "status-mst"
     const val LEAVE_TYPES            = "leave-types"
     const val LEAVE_TRANSACTIONS     = "leave-transactions"
-    const val LEAVE_TRANSACTION_DETAIL = "leave-transactions/{id}"
+    const val CANTEEN_ENTRIES        = "canteen-entries"
+    const val CANTEEN_ENTRY_DETAIL   = "canteen-entries/{id}"
 
     // ── Spinning Doff ─────────────────────────────────────────────
     const val SPELLS                  = "spells"

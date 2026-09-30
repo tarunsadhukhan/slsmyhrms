@@ -37,10 +37,12 @@ import com.example.slsHrms.api.Shift
 import com.example.slsHrms.api.ShiftResponse
 import com.example.slsHrms.databinding.ActivityAttendanceBinding
 import com.example.slsHrms.face.FaceGallery
+import com.example.slsHrms.local.LastEntryStore
 import com.example.slsHrms.sync.Connectivity
 import com.example.slsHrms.sync.OfflineEmployees
 import com.example.slsHrms.sync.OfflinePhotoStore
 import com.example.slsHrms.sync.SyncEngine
+import com.example.slsHrms.util.SpellWindow
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationCallback
 import com.google.android.gms.location.LocationRequest
@@ -270,6 +272,14 @@ class AttendanceActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         binding = ActivityAttendanceBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // Hours fields: digits with at most 2 decimals (e.g. 7.75)
+        val twoDecimals = android.text.InputFilter { src, start, end, dest, dstart, dend ->
+            val next = dest.replaceRange(dstart, dend, src.subSequence(start, end)).toString()
+            if (next.matches(Regex("\\d*(\\.\\d{0,2})?"))) null else ""
+        }
+        listOf(binding.etShiftHours, binding.etWorkingHours, binding.etIdleHours)
+            .forEach { it.filters = arrayOf(twoDecimals) }
 
         selectedCompanyId = intent.getIntExtra("CO_ID", 0)
         selectedBranchId  = intent.getIntExtra("BRANCH_ID", 0)
@@ -532,9 +542,9 @@ class AttendanceActivity : AppCompatActivity() {
                             if (position >= 0 && position < shifts.size) {
                                 val selectedShift = shifts[position]
                                 val shiftHours = selectedShift.shiftHours ?: 0.0
-                                binding.etShiftHours.setText(String.format(Locale.getDefault(), "%.0f", shiftHours))
+                                binding.etShiftHours.setText(String.format(Locale.US, "%.2f", shiftHours))
                                 // Auto-fill working hours to match shift hours
-                                binding.etWorkingHours.setText(String.format(Locale.getDefault(), "%.0f", shiftHours))
+                                binding.etWorkingHours.setText(String.format(Locale.US, "%.2f", shiftHours))
                             }
                         }
                         
@@ -547,9 +557,9 @@ class AttendanceActivity : AppCompatActivity() {
                     if (shifts.isNotEmpty()) {
                         val firstShift = shifts[0]
                         val shiftHours = firstShift.shiftHours ?: 0.0
-                        binding.etShiftHours.setText(String.format(Locale.getDefault(), "%.0f", shiftHours))
+                        binding.etShiftHours.setText(String.format(Locale.US, "%.2f", shiftHours))
                         // Auto-fill working hours to match shift hours
-                        binding.etWorkingHours.setText(String.format(Locale.getDefault(), "%.0f", shiftHours))
+                        binding.etWorkingHours.setText(String.format(Locale.US, "%.2f", shiftHours))
                     }
                 } else {
                     Toast.makeText(this@AttendanceActivity, "Failed to load shifts", Toast.LENGTH_SHORT).show()
@@ -728,7 +738,20 @@ class AttendanceActivity : AppCompatActivity() {
 
                             // Pre-fill last-worked designation + machines when the
                             // selected department matches where the employee last worked.
-                            applyLastWorkedDefaults(result)
+                            applyLastWorkedDefaults(
+                                result.defaultDepartmentId,
+                                result.defaultDesignationId,
+                                result.defaultMachineIds
+                            )
+                            // Keep the local last-entry row fresh with the
+                            // server's view, for the offline pre-fill.
+                            LastEntryStore.remember(
+                                this@AttendanceActivity,
+                                result.empCode ?: empCode,
+                                result.defaultDepartmentId,
+                                result.defaultDesignationId,
+                                result.defaultMachineIds
+                            )
 
                             Toast.makeText(
                                 this@AttendanceActivity,
@@ -816,6 +839,9 @@ class AttendanceActivity : AppCompatActivity() {
             // for the photo_html the server shows online.
             val photo = if (known != null) FaceGallery.thumbFor(this, selectedBranchId, empCode)
                 ?.let { android.graphics.BitmapFactory.decodeByteArray(it, 0, it.size) } else null
+            // This device's last-entry row — the offline stand-in for the
+            // default_* fields the server sends online.
+            val lastEntry = LastEntryStore.find(this, empCode)
 
             runOnUiThread {
                 if (isFinishing) return@runOnUiThread
@@ -843,6 +869,15 @@ class AttendanceActivity : AppCompatActivity() {
                     // Nothing downloaded to check against. Stay provisional:
                     // a device that has never synced must not stop the gate.
                     else -> Unit
+                }
+                // Same pre-fill as online: designation + machines from the
+                // employee's last entry, when the department matches.
+                if (isEmployeeVerified && lastEntry != null) {
+                    applyLastWorkedDefaults(
+                        lastEntry.deptId,
+                        lastEntry.designationId,
+                        LastEntryStore.ids(lastEntry.machineIds)
+                    )
                 }
             }
         }
@@ -1317,6 +1352,26 @@ class AttendanceActivity : AppCompatActivity() {
                 return@setOnClickListener
             }
 
+            // 3b. Face attendance is a live punch: it must fall inside the
+            // selected spell's hours on the selected date. An overnight spell
+            // (C 22:00→06:00) runs into the next morning and is dated by its
+            // start day — same convention the backend uses for such rows.
+            if (capturedBase64 != null || faceValidated) {
+                val sh = shifts.getOrNull(shiftPos)
+                val date = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+                val overnight = sh?.isOvernight == 1
+                if (sh != null && !SpellWindow.isWithin(
+                        date, sh.startTime, sh.endTime, overnight, System.currentTimeMillis())
+                ) {
+                    showAlert(
+                        "Outside Spell Hours",
+                        "Spell ${sh.name} runs ${SpellWindow.label(sh.startTime, sh.endTime, overnight)}. " +
+                            "Face attendance can only be saved within these hours on the spell's date ($date)."
+                    )
+                    return@setOnClickListener
+                }
+            }
+
             // 4. Occupation must be selected (position 0 is "Select Occupation")
             if (occPos == 0) {
                 Toast.makeText(this, "Please select an occupation", Toast.LENGTH_SHORT).show()
@@ -1386,6 +1441,12 @@ class AttendanceActivity : AppCompatActivity() {
 
             // Format attendance date as yyyy-MM-dd for the API
             val attendanceDate = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(calendar.time)
+
+            // What is being submitted IS the employee's latest entry now —
+            // remember it so the next offline lookup pre-fills from it.
+            if (empCode.isNotBlank()) {
+                LastEntryStore.remember(this, empCode, deptId, occId, selectedMachineIds)
+            }
 
             // All validations passed — determine Face vs Manual
             if (capturedBase64 != null) {
@@ -1643,17 +1704,17 @@ class AttendanceActivity : AppCompatActivity() {
     // department the user has already selected matches the last-worked
     // department. Otherwise the designation/machines belong to a different
     // department and aren't valid here, so we clear them.
-    private fun applyLastWorkedDefaults(result: FaceRecognitionResponse) {
+    private fun applyLastWorkedDefaults(
+        lastDeptId: Int?, lastDesigId: Int?, lastMachineIds: List<Int>?
+    ) {
         val deptPos = binding.spinnerDepartment.selectedItemPosition
         val selectedDeptId =
             if (deptPos > 0 && departments.size >= deptPos) departments[deptPos - 1].id else null
-        val lastDeptId  = result.defaultDepartmentId
-        val lastDesigId = result.defaultDesignationId
 
         // Remember them so picking the matching department later also fills in.
         lastWorkedDeptId     = lastDeptId
         lastWorkedDesigId    = lastDesigId
-        lastWorkedMachineIds = result.defaultMachineIds
+        lastWorkedMachineIds = lastMachineIds
 
         // Always start from a clean machine state each lookup.
         selectedMachineIds.clear()
@@ -1675,11 +1736,11 @@ class AttendanceActivity : AppCompatActivity() {
         // yet do we (re)fetch and apply via the pending path.
         val idx = occupations.indexOfFirst { it.id == lastDesigId }
         if (idx >= 0) {
-            pendingMachineIds = result.defaultMachineIds
+            pendingMachineIds = lastMachineIds
             selectDesignation(idx + 1, lastDesigId)
         } else {
             pendingDesignationId = lastDesigId
-            pendingMachineIds    = result.defaultMachineIds
+            pendingMachineIds    = lastMachineIds
             loadDesignations(selectedBranchId, selectedDeptId)
         }
     }

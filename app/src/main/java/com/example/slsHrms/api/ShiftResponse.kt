@@ -21,6 +21,10 @@ data class Shift(
     @SerializedName("shift_hours")
     val shiftHours: Double? = null,
 
+    // spell_mst.is_overnight: 1 = ends the next calendar day (C 22:00→06:00)
+    @SerializedName("is_overnight")
+    val isOvernight: Int? = null,
+
     @SerializedName("working_hours")
     val workingHours: Double? = 8.0
 ) {
